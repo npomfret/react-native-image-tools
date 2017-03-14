@@ -34,6 +34,60 @@
       compile project(':react-native-image-tools')
   	```
 
+4. Add some maven repos to your root level `build.gradle`:
+
+```
+ allprojects {
+     repositories {
+         ...
+         maven {
+             url 'https://repo.adobe.com/nexus/content/repositories/releases/'
+         }
+         maven {
+             url 'http://maven.localytics.com/public'
+         }
+     }
+ }
+```
+
+5. To your app `build.gradle`, add the following:
+
+```
+android {
+  ...
+  defaultConfig {
+    ...
+    manifestPlaceholders = [appPackageName: "${applicationId}"]
+    multiDexEnabled true    
+  }
+
+  dexOptions {
+    jumboMode true
+    javaMaxHeapSize "4g"
+  }
+
+  dependencies {
+    compile 'com.android.support:multidex:1.0.1'
+    ...
+  }
+}
+```
+
+6. To your `MainApplication.java` add:
+
+```
+public class MainApplication extends Application implements ReactApplication {
+    ...
+    
+    @Override
+    public void onCreate() {
+        ...
+        MultiDex.install(getBaseContext());
+        ...
+    }
+}
+```
+
 #### Windows
 [Read it! :D](https://github.com/ReactWindows/react-native)
 
