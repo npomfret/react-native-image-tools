@@ -20,6 +20,7 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        manifestPlaceholders = [appPackageName: "${applicationId}"]
     }
     lintOptions {
         abortOnError false
@@ -31,6 +32,10 @@ repositories {
 }
 
 dependencies {
+    compile 'com.adobe.creativesdk.foundation:auth:0.9.1251'
+    compile 'com.adobe.creativesdk:image:4.8.4'
+    compile 'com.localytics.android:library:3.8.0'
+
     compile 'com.facebook.react:react-native:+'
 }
   
