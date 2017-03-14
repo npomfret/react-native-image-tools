@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -21,16 +22,18 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_GALLERY_PICKER = 20;
 
     private final ReactApplicationContext reactContext;
-    private final SelectImageListener selectImageListener;
+    private final SelectImageListener galleryListener;
+    private final SelectImageListener editorListener;
 
     public RNImageToolsModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
 
-        selectImageListener = new SelectImageListener();
-        reactContext.addActivityEventListener(selectImageListener);
+        galleryListener = new GalleryListener(REQ_CODE_GALLERY_PICKER);
+        reactContext.addActivityEventListener(galleryListener);
 
-//        AdobeCSDKFoundation.initializeCSDKFoundation(reactContext);
+        editorListener = new EditorListener(REQ_CODE_CSDK_IMAGE_EDITOR);
+        reactContext.addActivityEventListener(editorListener);
     }
 
     @Override
@@ -41,7 +44,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void openGallery(Promise promise) {
         if (promise != null)
-            selectImageListener.add(promise);
+            galleryListener.add(promise);
 
         Intent galleryPickerIntent = new Intent();
         galleryPickerIntent.setType("image/*");
@@ -51,37 +54,46 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void openEditor(String imageUri, Promise promise) {
+        if (promise != null)
+            editorListener.add(promise);
 
+        Intent imageEditorIntent = new AdobeImageIntent.Builder(reactContext)
+                .setData(Uri.parse(imageUri))
+                .build();
+
+        getReactApplicationContext().startActivityForResult(imageEditorIntent, REQ_CODE_CSDK_IMAGE_EDITOR, null);
     }
 
-    private class SelectImageListener extends BaseActivityEventListener {
+    private abstract class SelectImageListener extends BaseActivityEventListener {
         private final List<Promise> callbacks = new ArrayList<>();
+        private int requestCode;
+
+        public SelectImageListener(int requestCode) {
+            this.requestCode = requestCode;
+        }
 
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-            super.onActivityResult(activity, requestCode, resultCode, data);
+            if(requestCode != this.requestCode)
+                return;
 
-            Uri selectedImageUri = data.getData();
-            System.out.println("requestCode = " + requestCode);
-            System.out.println("resultCode = " + resultCode);
-            System.out.println("selectedImageUri = " + selectedImageUri);
+            Uri uri = uriFrom(data);
 
-            String realPathFromURI = resolve(selectedImageUri);
-            System.out.println("realPathFromURI = " + realPathFromURI);
+            String realPathFromURI = galleryResolve(uri);
 
-            if (requestCode == REQ_CODE_GALLERY_PICKER) {
-                while (!callbacks.isEmpty()) {
-                    Promise promise = callbacks.remove(0);
-                    promise.resolve(realPathFromURI);
-                }
+            while (!callbacks.isEmpty()) {
+                Promise promise = callbacks.remove(0);
+                promise.resolve(realPathFromURI);
             }
         }
+
+        protected abstract Uri uriFrom(Intent data);
 
         public void add(Promise promise) {
             callbacks.add(promise);
         }
 
-        private String resolve(Uri uri) {
+        protected String galleryResolve(Uri uri) {
             Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
             if (cursor == null) { // not from the local database
                 return uri.getPath();
@@ -96,6 +108,27 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 }
             }
         }
+    }
 
+    private class GalleryListener extends SelectImageListener {
+        public GalleryListener(int code) {
+            super(code);
+        }
+
+        @Override
+        protected Uri uriFrom(Intent data) {
+            return data.getData();
+        }
+    }
+
+    private class EditorListener extends SelectImageListener {
+        public EditorListener(int code) {
+            super(code);
+        }
+
+        @Override
+        protected Uri uriFrom(Intent data) {
+            return data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
+        }
     }
 }

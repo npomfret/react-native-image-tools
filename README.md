@@ -1,6 +1,8 @@
 
 # react-native-image-tools
 
+Image editing software powered by Abode Creative SDK.
+
 ## Getting started
 
 `$ npm install react-native-image-tools --save`
@@ -98,10 +100,6 @@ public class MainApplication extends Application implements ReactApplication {
 
 
 ## Usage
-```javascript
-import RNImageTools from 'react-native-image-tools';
 
-// TODO: What to do with the module?
-RNImageTools;
-```
+See the example [project](https://github.com/npomfret/react-native-location-change-example/blob/master/LocationChangeExample/app.js).
   
