@@ -5,7 +5,9 @@
 #import <React/RCTBridgeModule.h>
 #endif
 
-@interface RNImageTools : NSObject <RCTBridgeModule>
+#import <UIKit/UIKit.h>
+
+@interface RNImageTools : NSObject <RCTBridgeModule, UIImagePickerControllerDelegate>
 
 @end
   
