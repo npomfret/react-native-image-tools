@@ -10,16 +10,20 @@ Then
 
     $ react-native link react-native-image-tools
 
-* Get your client id, secret key and redirect uri from [abobe.io](https://www.adobe.io/console).
+* Get your client id, secret key etc from [abobe.io](https://www.adobe.io/console/integrations/new).
+
+(When finished you will need to submit your app for [review](https://creativesdk.zendesk.com/hc/en-us/articles/204601215-How-to-complete-the-Production-Client-ID-Request)).
 
 ## For iOS
 
 * Download the [https://creativesdk.adobe.com/downloads.html](Adobe Creative SDK) for iOS.
 * Copy the required frameworks to the a `Frameworks` folder at the root of your iOS project
+* In xCode, select your apps target, and find _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add one of them, then repeat for the other.
 
 ## For Android
 
-* In xCode, select your apps target, and find _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add one of them, then repeat for the other.
+(official docs [here](https://creativesdk.adobe.com/docs/android/#/articles/gettingstarted/index.html))
+
 * Add some maven repos to your root level `build.gradle`:
 
 ```
@@ -62,7 +66,9 @@ android {
 * To your `MainApplication.java` add:
 
 ```
-public class MainApplication extends Application implements ReactApplication {
+//add IAdobeAuthClientCredentials to the implements list
+
+public class MainApplication extends Application implements ReactApplication, IAdobeAuthClientCredentials  {
     ...
     
     @Override
@@ -71,6 +77,25 @@ public class MainApplication extends Application implements ReactApplication {
         MultiDex.install(getBaseContext());
         ...
     }
+
+    @Override
+    public String getClientID() {
+        return "your client id here";
+    }
+
+    @Override
+    public String getClientSecret() {
+        return "your client secret here";
+    }
+
+    @Override
+    public String getRedirectURI() {
+        return "your client redirect here";
+    }
+
+    @Override
+    public String[] getAdditionalScopesList() {
+        return new String[]{"email", "profile", "address"};
+    }
 }
 ```
-  
