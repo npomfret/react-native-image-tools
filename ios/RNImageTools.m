@@ -27,12 +27,18 @@ static NSString *const kAVYAdobeCreativeCloudSecret = @"changeme";
 }
 RCT_EXPORT_MODULE()
 
+RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret) {
+    [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:clientId
+                                                               withClientSecret:clientSecret];
+}
+
 RCT_EXPORT_METHOD(openGallery:(NSDictionary*)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     self.resolve = resolve;
     self.reject = reject;
+    
 
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;

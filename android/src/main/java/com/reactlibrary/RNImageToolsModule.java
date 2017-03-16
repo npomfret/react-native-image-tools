@@ -43,6 +43,11 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void authorize(String clientId, String clientSecret) {
+        //ignored for android
+    }
+
+    @ReactMethod
     public void openGallery(ReadableMap options, Promise promise) {
         galleryListener.add(promise);
 
