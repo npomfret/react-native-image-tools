@@ -91,15 +91,9 @@ RCT_EXPORT_METHOD(openEditor:(NSString*)url
 
 - (void)photoEditor:(AdobeUXImageEditorViewController *)editor finishedWithImage:(UIImage *__nullable)image
 {
-    NSData *data = UIImageJPEGRepresentation(image, 1.0);
-    
-    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], @".jpeg"]];
-    
-    [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
-    
-    NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
-    
-    self.resolve([fileUrl absoluteString]);
+    NSString* savedAt = [self saveImage:image];
+
+    self.resolve(savedAt);
     
     [editor dismissModalViewControllerAnimated:YES];
 }
@@ -108,23 +102,29 @@ RCT_EXPORT_METHOD(openEditor:(NSString*)url
 {
     [editor dismissModalViewControllerAnimated:YES];
 
-    self.resolve(@"");
+    self.reject(@"Error", @"Cancelled", nil);
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
-    UIImage *image = [info valueForKey:UIImagePickerControllerOriginalImage];
+    UIImage* image = [info valueForKey:UIImagePickerControllerOriginalImage];
+    
+    NSString* savedAt = [self saveImage:image];
+
+    self.resolve(savedAt);
+    
+    [picker dismissModalViewControllerAnimated:YES];
+}
+
+- (NSString*) saveImage:(UIImage *) image {
     NSData *data = UIImageJPEGRepresentation(image, 1.0);
     
     NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], @".jpeg"]];
-
+    
     [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
     
     NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
-
-    self.resolve([fileUrl absoluteString]);
-    
-    [picker dismissModalViewControllerAnimated:YES];
+    return [fileUrl absoluteString];
 }
 
 - (void)checkPhotosPermissions:(void(^)(BOOL granted))callback
