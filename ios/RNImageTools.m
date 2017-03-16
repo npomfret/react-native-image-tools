@@ -3,13 +3,21 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
+#import <AdobeCreativeSDKCore/AdobeCreativeSDKCore.h>
+#import "AdobeCreativeSDKImage/AdobeCreativeSDKImage.h"
 
-@interface RNImageTools ()
+@interface RNImageTools () <AdobeUXImageEditorViewControllerDelegate>
 
 @property (nonatomic, strong) UIImagePickerController *picker;
 @property (nonatomic, strong) RCTPromiseResolveBlock resolve;
+@property (nonatomic, strong) RCTPromiseRejectBlock reject;
+
+@property (nonatomic, strong) AdobeUXImageEditorViewController *controller;
 
 @end
+
+static NSString *const kAVYAdobeCreativeCloudKey = @"changeme";
+static NSString *const kAVYAdobeCreativeCloudSecret = @"changeme";
 
 @implementation RNImageTools
 
@@ -23,6 +31,9 @@ RCT_EXPORT_METHOD(openGallery:(NSDictionary*)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    self.resolve = resolve;
+    self.reject = reject;
+
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
     picker.allowsEditing = NO;
@@ -39,7 +50,6 @@ RCT_EXPORT_METHOD(openGallery:(NSDictionary*)options
     };
     
     picker.delegate = self;
-    self.resolve = resolve;
     
     [self checkPhotosPermissions:^(BOOL granted) {
         if (!granted) {
@@ -51,12 +61,62 @@ RCT_EXPORT_METHOD(openGallery:(NSDictionary*)options
     }];
 }
 
+RCT_EXPORT_METHOD(openEditor:(NSString*)url
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    self.resolve = resolve;
+    self.reject = reject;
+
+    [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:kAVYAdobeCreativeCloudKey
+                                                               withClientSecret:kAVYAdobeCreativeCloudSecret];
+
+    
+    NSURL *imageURL = [NSURL URLWithString:url];
+    NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+    UIImage *image = [UIImage imageWithData:imageData];
+    
+    [self setController:[[AdobeUXImageEditorViewController alloc] initWithImage:image]];
+    [[self controller] setDelegate:self];
+//    [self presentViewController:[self controller] animated:YES completion:nil];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *root = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+        while (root.presentedViewController != nil) {
+            root = root.presentedViewController;
+        }
+        [root presentViewController:[self controller] animated:YES completion:nil];
+    });
+}
+
+- (void)photoEditor:(AdobeUXImageEditorViewController *)editor finishedWithImage:(UIImage *__nullable)image
+{
+    NSData *data = UIImageJPEGRepresentation(image, 1.0);
+    
+    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], @".jpeg"]];
+    
+    [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
+    
+    NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
+    
+    self.resolve([fileUrl absoluteString]);
+    
+    [editor dismissModalViewControllerAnimated:YES];
+}
+
+- (void)photoEditorCanceled:(AdobeUXImageEditorViewController *)editor
+{
+    [editor dismissModalViewControllerAnimated:YES];
+
+    self.resolve(@"");
+}
+
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
-    UIImage *selectedImage = [info valueForKey:UIImagePickerControllerOriginalImage];
-    NSData *data = UIImageJPEGRepresentation(selectedImage, 1.0);
+    UIImage *image = [info valueForKey:UIImagePickerControllerOriginalImage];
+    NSData *data = UIImageJPEGRepresentation(image, 1.0);
     
-    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:@"temp-image.jpeg"];
+    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], @".jpeg"]];
 
     [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
     
