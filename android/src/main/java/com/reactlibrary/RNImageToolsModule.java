@@ -12,14 +12,15 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
-    private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 3001;
-    private static final int REQ_CODE_GALLERY_PICKER = 20;
+    private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 1122;
+    private static final int REQ_CODE_GALLERY_PICKER = 2233;
 
     private final ReactApplicationContext reactContext;
     private final SelectImageListener galleryListener;
@@ -42,9 +43,8 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void openGallery(Promise promise) {
-        if (promise != null)
-            galleryListener.add(promise);
+    public void openGallery(ReadableMap options, Promise promise) {
+        galleryListener.add(promise);
 
         Intent galleryPickerIntent = new Intent();
         galleryPickerIntent.setType("image/*");
@@ -54,8 +54,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void openEditor(String imageUri, Promise promise) {
-        if (promise != null)
-            editorListener.add(promise);
+        editorListener.add(promise);
 
         Intent imageEditorIntent = new AdobeImageIntent.Builder(reactContext)
                 .setData(Uri.parse(imageUri))
@@ -66,7 +65,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
     private abstract class SelectImageListener extends BaseActivityEventListener {
         private final List<Promise> callbacks = new ArrayList<>();
-        private int requestCode;
+        private final int requestCode;
 
         public SelectImageListener(int requestCode) {
             this.requestCode = requestCode;
@@ -74,16 +73,31 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
         @Override
         public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
-            if(requestCode != this.requestCode)
+            if (requestCode != this.requestCode)
                 return;
+
+            if(data == null) {
+                reject();
+                return;
+            }
 
             Uri uri = uriFrom(data);
 
-            String realPathFromURI = galleryResolve(uri);
+            if(uri == null) {
+                reject();
+                return;
+            }
+
+            String realPathFromURI = resolveUri(uri);
 
             while (!callbacks.isEmpty()) {
-                Promise promise = callbacks.remove(0);
-                promise.resolve(realPathFromURI);
+                callbacks.remove(0).resolve(realPathFromURI);
+            }
+        }
+
+        private void reject() {
+            while (!callbacks.isEmpty()) {
+                callbacks.remove(0).reject("-1", "Cancelled");
             }
         }
 
@@ -93,10 +107,17 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             callbacks.add(promise);
         }
 
-        protected String galleryResolve(Uri uri) {
+        String resolveUri(Uri uri) {
+            /*
+            content://com.android.providers.media.documents/document/image%3A519
+            content://media/external/images/media/430
+            ... or maybe (like from drobox)
+            file:///storage/emulated/0/Android/data/com.dropbox.android/files/u3578267/scratch/testing/2015-04-26%2017.00.22.jpg
+             */
             Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+
             if (cursor == null) { // not from the local database
-                return uri.getPath();
+                return uri.toString();
             } else {
                 cursor.moveToFirst();
                 try {
