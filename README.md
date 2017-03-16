@@ -5,7 +5,7 @@ You will need to create an adobe account, and to run on iOS you will need to dow
 
 In addition, before releasing your app you will also need to get approval from Adobe.
 
-<img src="docs/output.gif" width="350">
+<img src="docs/demo.gif" width="350">
 
 Install instructions [here](./docs/install.md).
 
