@@ -32,7 +32,7 @@ RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientS
                                                                withClientSecret:clientSecret];
 }
 
-RCT_EXPORT_METHOD(openGallery:(NSDictionary*)options
+RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {

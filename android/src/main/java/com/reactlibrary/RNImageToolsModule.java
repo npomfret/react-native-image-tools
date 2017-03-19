@@ -48,7 +48,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void openGallery(ReadableMap options, Promise promise) {
+    public void selectImage(ReadableMap options, Promise promise) {
         galleryListener.add(promise);
 
         Intent galleryPickerIntent = new Intent();
