@@ -69,21 +69,51 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     }];
 }
 
-RCT_EXPORT_METHOD(openEditor:(NSString*)url
+RCT_EXPORT_METHOD(openEditor:(NSString*)uri
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     self.resolve = resolve;
     self.reject = reject;
     
-    NSURL *imageURL = [NSURL URLWithString:url];
-    NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-    UIImage *image = [UIImage imageWithData:imageData];
+    NSURL *imageURL = [NSURL URLWithString:uri];
+
+    if([uri hasPrefix:@"assets-library"]){
+
+        //no idea why this is necessary, or ever correct (but it crashes without it) :(
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_enter(group);
+        
+        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+        __block UIImage *image;
+        [library assetForURL:[NSURL URLWithString:uri] resultBlock:^(ALAsset *asset) {
+            image = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullResolutionImage]];
+            dispatch_group_leave(group);
+        } failureBlock:^(NSError *error) {
+            NSLog(@"Error: %@ %@", error, [error userInfo]);
+            reject(@"Error", [error localizedDescription], nil);
+            dispatch_group_leave(group);
+        }];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+            // end necessary stuff here ;(
+            
+            [self sendToEditor:image];
+        });
+    } else {
+        NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+        UIImage *image = [UIImage imageWithData:imageData];
+        
+        [self sendToEditor:image];
+    }
+}
+
+- (void) sendToEditor:(UIImage*)image {
     
     [self setController:[[AdobeUXImageEditorViewController alloc] initWithImage:image]];
     [[self controller] setDelegate:self];
-//    [self presentViewController:[self controller] animated:YES completion:nil];
-
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         UIViewController *root = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
         while (root.presentedViewController != nil) {
