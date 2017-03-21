@@ -15,7 +15,8 @@ to submit your app to Adobe for [review](https://creativesdk.zendesk.com/hc/en-u
 ## For iOS
 
 * Download the [Adobe Creative SDK](https://creativesdk.adobe.com/downloads.html) for iOS.
-* Copy the required frameworks (_AdobeCreativeSDKImage.framework_ and _AdobeCreativeSDKCore.framework_)to the a `Frameworks` folder at the root of your iOS project
+* Create a folder called `Frameworks` at the root of your iOS project
+* Copy the required frameworks (_AdobeCreativeSDKImage.framework_ and _AdobeCreativeSDKCore.framework_) to a `Frameworks` folder at the root of your iOS project
 * in xCode:
   * under _General_ > _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add them both
   * under _Build Settings_ > _Framework Search Paths_  add `$(PROJECT_DIR/Frameworks)`
