@@ -77,6 +77,7 @@ public class MainApplication extends Application implements ReactApplication, IA
     public void onCreate() {
         ...
         MultiDex.install(getBaseContext());
+        AdobeCSDKFoundation.initializeCSDKFoundation(getApplicationContext());
         ...
     }
 
