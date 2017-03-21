@@ -13,7 +13,7 @@ No npm package yet...
 
 ## For iOS
 
-* Download the [https://creativesdk.adobe.com/downloads.html](Adobe Creative SDK) for iOS.
+* Download the [Adobe Creative SDK](https://creativesdk.adobe.com/downloads.html) for iOS.
 * Copy the required frameworks to the a `Frameworks` folder at the root of your iOS project
 * In xCode, select your apps target, and find _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add one of them, then repeat for the other.
 
