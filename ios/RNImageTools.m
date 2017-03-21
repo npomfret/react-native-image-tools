@@ -16,9 +16,6 @@
 
 @end
 
-static NSString *const kAVYAdobeCreativeCloudKey = @"changeme";
-static NSString *const kAVYAdobeCreativeCloudSecret = @"changeme";
-
 @implementation RNImageTools
 
 - (dispatch_queue_t)methodQueue
@@ -27,9 +24,14 @@ static NSString *const kAVYAdobeCreativeCloudSecret = @"changeme";
 }
 RCT_EXPORT_MODULE()
 
-RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret) {
+RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
     [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:clientId
-                                                               withClientSecret:clientSecret];
+                                                                   clientSecret:clientSecret
+                                                            additionalScopeList:@[AdobeAuthManagerUserProfileScope,
+                                                                                  AdobeAuthManagerEmailScope,
+                                                                                  AdobeAuthManagerAddressScope]];
+    
+    [AdobeUXAuthManager sharedManager].redirectURL = [NSURL URLWithString:redirectUri];
 }
 
 RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
@@ -73,10 +75,6 @@ RCT_EXPORT_METHOD(openEditor:(NSString*)url
 {
     self.resolve = resolve;
     self.reject = reject;
-
-    [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:kAVYAdobeCreativeCloudKey
-                                                               withClientSecret:kAVYAdobeCreativeCloudSecret];
-
     
     NSURL *imageURL = [NSURL URLWithString:url];
     NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
