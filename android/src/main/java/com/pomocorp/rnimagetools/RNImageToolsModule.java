@@ -1,4 +1,4 @@
-package com.reactlibrary;
+package com.pomocorp.rnimagetools;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -8,13 +8,6 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
-import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
-import com.adobe.creativesdk.aviary.internal.headless.utils.MegaPixels;
-import com.adobe.creativesdk.foundation.AdobeCSDKFoundation;
-import com.adobe.creativesdk.foundation.internal.auth.AdobeAuthManager;
-import com.adobe.creativesdk.foundation.internal.common.AdobeCommonApplicationContextHolder;
-import com.adobe.creativesdk.foundation.internal.utils.logging.AdobeLogger;
-import com.adobe.creativesdk.foundation.internal.utils.logging.Level;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -24,12 +17,8 @@ import com.facebook.react.bridge.ReadableMap;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.crypto.NoSuchPaddingException;
 
 import static android.app.Activity.RESULT_OK;
 
