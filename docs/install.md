@@ -68,8 +68,13 @@ android {
 * To your `MainApplication.java` add:
 
 ```
-//add IAdobeAuthClientCredentials to the implements list
 
+...
+import com.adobe.creativesdk.foundation.AdobeCSDKFoundation;
+import com.adobe.creativesdk.foundation.auth.IAdobeAuthClientCredentials;
+...
+
+//add IAdobeAuthClientCredentials to the implements list
 public class MainApplication extends Application implements ReactApplication, IAdobeAuthClientCredentials  {
     ...
     
