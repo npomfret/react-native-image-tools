@@ -19,7 +19,7 @@ to submit your app to Adobe for [review](https://creativesdk.zendesk.com/hc/en-u
 * Copy the required frameworks (_AdobeCreativeSDKImage.framework_ and _AdobeCreativeSDKCore.framework_) to a `Frameworks` folder at the root of your iOS project
 * in xCode:
   * under _General_ > _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add them both
-  * under _Build Settings_ > _Framework Search Paths_  add `$(PROJECT_DIR/Frameworks)`
+  * under _Build Settings_ > _Framework Search Paths_  add `$(PROJECT_DIR)/Frameworks`
   * clean and build
 
 ## For Android
