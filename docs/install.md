@@ -4,7 +4,7 @@ A working project can be found in the the [example app](https://github.com/npomf
 
 No npm package yet...
     
-    npm install react-native-cloud-fs@https://github.com/npomfret/react-native-image-tools.git --save
+    npm install react-native-image-tools@https://github.com/npomfret/react-native-image-tools.git --save
     react-native link react-native-image-tools
     
 * Get your Adobe ID key (client id, secret key and redirect url) for the Abode Creative SDK from [abobe.io](https://www.adobe.io/console/integrations/new).  It will work without it, but you will get a pop up warning when the image editor is launched.
