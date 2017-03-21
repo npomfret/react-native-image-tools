@@ -3,10 +3,18 @@ package com.reactlibrary;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
+import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
+import com.adobe.creativesdk.aviary.internal.headless.utils.MegaPixels;
+import com.adobe.creativesdk.foundation.AdobeCSDKFoundation;
+import com.adobe.creativesdk.foundation.internal.auth.AdobeAuthManager;
+import com.adobe.creativesdk.foundation.internal.common.AdobeCommonApplicationContextHolder;
+import com.adobe.creativesdk.foundation.internal.utils.logging.AdobeLogger;
+import com.adobe.creativesdk.foundation.internal.utils.logging.Level;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -15,12 +23,20 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.crypto.NoSuchPaddingException;
+
+import static android.app.Activity.RESULT_OK;
 
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 1122;
     private static final int REQ_CODE_GALLERY_PICKER = 2233;
+    private static final String[] ADDITIONAL_SCOPES = {"email", "profile", "address"};
 
     private final ReactApplicationContext reactContext;
     private final SelectImageListener galleryListener;
@@ -48,13 +64,16 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void selectImage(ReadableMap options, Promise promise) {
+    public void openGallery(ReadableMap options, Promise promise) {
         galleryListener.add(promise);
 
         Intent galleryPickerIntent = new Intent();
         galleryPickerIntent.setType("image/*");
         galleryPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
-        getReactApplicationContext().startActivityForResult(Intent.createChooser(galleryPickerIntent, "Select an Image"), REQ_CODE_GALLERY_PICKER, null);
+
+        String title = options.hasKey("title") ? options.getString("title") : "choose image";
+
+        getReactApplicationContext().startActivityForResult(Intent.createChooser(galleryPickerIntent, title), REQ_CODE_GALLERY_PICKER, null);
     }
 
     @ReactMethod
@@ -63,6 +82,9 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
         Intent imageEditorIntent = new AdobeImageIntent.Builder(reactContext)
                 .setData(Uri.parse(imageUri))
+                .withOutputFormat(Bitmap.CompressFormat.JPEG)
+                .withOutputQuality(90)
+                .withNoExitConfirmation(true)
                 .build();
 
         getReactApplicationContext().startActivityForResult(imageEditorIntent, REQ_CODE_CSDK_IMAGE_EDITOR, null);
@@ -81,7 +103,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             if (requestCode != this.requestCode)
                 return;
 
-            if(data == null) {
+            if(data == null || resultCode != RESULT_OK) {
                 reject();
                 return;
             }
@@ -156,5 +178,16 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         protected Uri uriFrom(Intent data) {
             return data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
         }
+    }
+
+    private static void setField(Field field, Object newValue) throws Exception {
+        field.setAccessible(true);
+
+//        Field modifiersField = Field.class.getDeclaredField("modifiers");
+//        modifiersField.setAccessible(true);
+//        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+        field.set(null, newValue);
+        field.setAccessible(false);
     }
 }
