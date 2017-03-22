@@ -69,18 +69,23 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     }];
 }
 
-RCT_EXPORT_METHOD(openEditor:(NSString*)uri
+RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     self.resolve = resolve;
     self.reject = reject;
     
+    NSString* uri = options[@"imageUri"];
+    if(!uri) {
+        return reject(@"error", @"imageUri not present", nil);
+    }
+    
     NSURL *imageURL = [NSURL URLWithString:uri];
 
     if([uri hasPrefix:@"assets-library"]){
 
-        //no idea why this is necessary, or ever correct (but it crashes without it) :(
+        //no idea why this is necessary, or even  correct (but it crashes without it) :(
         dispatch_group_t group = dispatch_group_create();
         dispatch_group_enter(group);
         
@@ -99,19 +104,23 @@ RCT_EXPORT_METHOD(openEditor:(NSString*)uri
             dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
             // end necessary stuff here ;(
             
-            [self sendToEditor:image];
+            [self sendToEditor:image options:options];
         });
     } else {
         NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
         UIImage *image = [UIImage imageWithData:imageData];
         
-        [self sendToEditor:image];
+        [self sendToEditor:image options:options];
     }
 }
 
-- (void) sendToEditor:(UIImage*)image {
+- (void) sendToEditor:(UIImage*)image options:(NSDictionary*) options {
     
-    [self setController:[[AdobeUXImageEditorViewController alloc] initWithImage:image]];
+    AdobeUXImageEditorViewController* editor = [[AdobeUXImageEditorViewController alloc] initWithImage:image];
+    
+    //todo: set the options
+    
+    [self setController:editor];
     [[self controller] setDelegate:self];
     
     dispatch_async(dispatch_get_main_queue(), ^{

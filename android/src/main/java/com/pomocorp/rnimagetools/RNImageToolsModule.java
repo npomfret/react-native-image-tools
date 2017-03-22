@@ -25,7 +25,6 @@ import static android.app.Activity.RESULT_OK;
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 1122;
     private static final int REQ_CODE_GALLERY_PICKER = 2233;
-    private static final String[] ADDITIONAL_SCOPES = {"email", "profile", "address"};
 
     private final ReactApplicationContext reactContext;
     private final SelectImageListener galleryListener;
@@ -48,7 +47,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void authorize(String clientId, String clientSecret) {
+    public void authorize(String clientId, String clientSecret, String clientUri) {
         //ignored for android
     }
 
@@ -60,23 +59,44 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         galleryPickerIntent.setType("image/*");
         galleryPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
 
-        String title = options.hasKey("title") ? options.getString("title") : "choose image";
+        String title = options.hasKey("title") ? options.getString("title") : "choose image";//where does this appear?
 
         getReactApplicationContext().startActivityForResult(Intent.createChooser(galleryPickerIntent, title), REQ_CODE_GALLERY_PICKER, null);
     }
 
     @ReactMethod
-    public void openEditor(String imageUri, Promise promise) {
+    public void openEditor(ReadableMap options, Promise promise) {
         editorListener.add(promise);
 
-        Intent imageEditorIntent = new AdobeImageIntent.Builder(reactContext)
-                .setData(Uri.parse(imageUri))
-                .withOutputFormat(Bitmap.CompressFormat.JPEG)
-                .withOutputQuality(90)
-                .withNoExitConfirmation(true)
-                .build();
+        try {
+            Uri imageUri;
+            if(options.hasKey("imageUri"))
+                imageUri = Uri.parse(options.getString("imageUri"));
+            else {
+                promise.reject("error", "imageUri not present");
+                return;
+            }
 
-        getReactApplicationContext().startActivityForResult(imageEditorIntent, REQ_CODE_CSDK_IMAGE_EDITOR, null);
+            Bitmap.CompressFormat format = Bitmap.CompressFormat.JPEG;
+            if(options.hasKey("outputFormat")) {
+                Bitmap.CompressFormat.valueOf(options.getString("outputFormat"));
+            }
+
+            int quality = 80;
+            if(options.hasKey("quality")) {
+                quality = options.getInt("quality");
+            }
+
+            AdobeImageIntent.Builder builder = new AdobeImageIntent.Builder(reactContext)
+                    .setData(imageUri)
+                    .withOutputFormat(format)
+                    .withOutputQuality(quality)
+                    .withNoExitConfirmation(true);
+
+            getReactApplicationContext().startActivityForResult(builder.build(), REQ_CODE_CSDK_IMAGE_EDITOR, null);
+        } catch (Exception e) {
+            promise.reject("error", "failed to start editor", e);
+        }
     }
 
     private abstract class SelectImageListener extends BaseActivityEventListener {
