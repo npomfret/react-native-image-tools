@@ -146,9 +146,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 - (void)photoEditor:(AdobeUXImageEditorViewController *)editor finishedWithImage:(UIImage *__nullable)image
 {
-    NSString* savedAt = [self saveImage:image];
-
-    self.resolve(savedAt);
+    [self saveImage:image];
     
     [editor dismissModalViewControllerAnimated:YES];
 }
@@ -162,17 +160,15 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
-    UIImage* image = [info valueForKey:UIImagePickerControllerOriginalImage];
-    
-    NSString* savedAt = [self saveImage:image];
-
-    self.resolve(savedAt);
+    NSURL* localUrl = (NSURL *)[info valueForKey:UIImagePickerControllerReferenceURL];
     
     [picker dismissModalViewControllerAnimated:YES];
+
+    self.resolve([localUrl absoluteString]);
 }
 
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
-- (NSString*) saveImage:(UIImage *) image {
+- (void) saveImage:(UIImage *) image {
     NSData* data = [self processImage:image];
     
     NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
@@ -180,7 +176,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
     
     NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
-    return [fileUrl absoluteString];
+    self.resolve([fileUrl absoluteString]);
 }
 
 - (NSData*)processImage:(UIImage*)image
