@@ -11,6 +11,8 @@
 @property (nonatomic, strong) UIImagePickerController *picker;
 @property (nonatomic, strong) RCTPromiseResolveBlock resolve;
 @property (nonatomic, strong) RCTPromiseRejectBlock reject;
+@property (nonatomic, strong) NSString* outputFormat;
+@property (nonatomic, retain) NSNumber* quality;
 
 @property (nonatomic, strong) AdobeUXImageEditorViewController *controller;
 
@@ -81,6 +83,16 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         return reject(@"error", @"imageUri not present", nil);
     }
     
+    self.quality = options[@"quality"];
+    if(!self.quality) {
+        self.quality = @(80);
+    }
+    
+    self.outputFormat = options[@"outputFormat"];
+    if(!self.outputFormat) {
+        self.outputFormat = @"JPEG";
+    }
+    
     NSURL *imageURL = [NSURL URLWithString:uri];
 
     if([uri hasPrefix:@"assets-library"]){
@@ -104,17 +116,17 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
             dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
             // end necessary stuff here ;(
             
-            [self sendToEditor:image options:options];
+            [self sendToEditor:image];
         });
     } else {
         NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
         UIImage *image = [UIImage imageWithData:imageData];
         
-        [self sendToEditor:image options:options];
+        [self sendToEditor:image];
     }
 }
 
-- (void) sendToEditor:(UIImage*)image options:(NSDictionary*) options {
+- (void) sendToEditor:(UIImage*)image {
     
     AdobeUXImageEditorViewController* editor = [[AdobeUXImageEditorViewController alloc] initWithImage:image];
     
@@ -159,15 +171,25 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     [picker dismissModalViewControllerAnimated:YES];
 }
 
+// see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (NSString*) saveImage:(UIImage *) image {
-    NSData *data = UIImageJPEGRepresentation(image, 1.0);
+    NSData* data = [self processImage:image];
     
-    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], @".jpeg"]];
+    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
     
     [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
     
     NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
     return [fileUrl absoluteString];
+}
+
+- (NSData*)processImage:(UIImage*)image
+{
+    if (self.outputFormat == @"PNG") {
+        return UIImagePNGRepresentation(image);
+    } else {//assume its a jpeg, nothing else is supported
+        return UIImageJPEGRepresentation(image, [self.quality floatValue] / 100.0f);
+    }
 }
 
 - (void)checkPhotosPermissions:(void(^)(BOOL granted))callback
