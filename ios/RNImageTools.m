@@ -174,7 +174,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 {
     [editor dismissModalViewControllerAnimated:YES];
 
-    self.reject(@"Error", @"Cancelled", nil);
+    return self.resolve([NSNull null]);
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
@@ -188,6 +188,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (void) saveImage:(UIImage *) image {
+
     NSData* imageData = [self processImage:image];
     
     if(self.saveTo == @"photos") {
