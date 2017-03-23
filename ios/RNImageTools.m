@@ -49,7 +49,6 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
     picker.allowsEditing = NO;
-    //picker.mediaTypes = @[kUTTypeImage];
     
     void (^showPickerViewController)() = ^void() {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -149,9 +148,13 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
             return reject(@"Error", @"input image not found", nil);
         }
         
+        if(options[@"preserveMetadata"]) {
+            CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
+            self.originalImageMetaData =  [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL)) mutableCopy];
+            CFRelease(imageSource);
+        }
+
         UIImage *image = [UIImage imageWithData:imageData];
-        
-        //todo - get metadata from image
         
         [self sendToEditor:image];
     }
@@ -203,7 +206,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
     NSData* imageData = [self processImage:image];
     
-    if(self.saveTo == @"photos") {
+    if([self.saveTo isEqualToString:@"photos"]) {
         [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:self.originalImageMetaData completionBlock:^(NSURL* url, NSError* error) {
             if (error == nil) {
                 //path isn't really applicable here (this is an asset uri), but left it in for backward comparability
@@ -224,7 +227,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 - (NSData*)processImage:(UIImage*)image
 {
-    if (self.outputFormat == @"PNG") {
+    if ([self.outputFormat isEqualToString:@"PNG"]) {
         return UIImagePNGRepresentation(image);
     } else {//assume its a jpeg, nothing else is supported
         return UIImageJPEGRepresentation(image, [self.quality floatValue] / 100.0f);
@@ -233,7 +236,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 - (NSData*)imageData:(NSURL*)imageUrl
 {
-    if (self.outputFormat == @"PNG") {
+    if ([self.outputFormat isEqualToString:@"PNG"]) {
         return [NSData dataWithData:UIImagePNGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]])];
     } else {//assume its a jpeg, nothing else is supported
         return [NSData dataWithData:UIImageJPEGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]], 1)];
