@@ -129,6 +129,39 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         }
     }
 
+    private String resolveUri(Uri uri) {
+            /*
+            content://com.android.providers.media.documents/document/image%3A519
+            content://media/external/images/media/430
+            ... or maybe (like from dropbox)
+            file:///storage/emulated/0/Android/data/com.dropbox.android/files/u3578267/scratch/testing/2015-04-26%2017.00.22.jpg
+             */
+
+        String scheme = uri.getScheme();
+        if(scheme == null) {
+            return uri.getPath();
+        } else if("file".equals(scheme)) {
+            return uri.getPath();
+        } else if("content".equals(scheme)) {
+            Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+
+            if (cursor == null) { // not from the local database
+                return uri.toString();
+            } else {
+                cursor.moveToFirst();
+                try {
+                    int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    String filePath = cursor.getString(idx);
+                    return new File(filePath).toURI().toString();
+                } finally {
+                    cursor.close();
+                }
+            }
+        } else {
+            return uri.toString();
+        }
+    }
+
     private abstract class SelectImageListener extends BaseActivityEventListener {
         private final List<Promise> callbacks = new ArrayList<>();
         private final int requestCode;
@@ -183,29 +216,6 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
         public void add(Promise promise) {
             callbacks.add(promise);
-        }
-
-        String resolveUri(Uri uri) {
-            /*
-            content://com.android.providers.media.documents/document/image%3A519
-            content://media/external/images/media/430
-            ... or maybe (like from drobox)
-            file:///storage/emulated/0/Android/data/com.dropbox.android/files/u3578267/scratch/testing/2015-04-26%2017.00.22.jpg
-             */
-            Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
-
-            if (cursor == null) { // not from the local database
-                return uri.toString();
-            } else {
-                cursor.moveToFirst();
-                try {
-                    int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                    String filePath = cursor.getString(idx);
-                    return new File(filePath).toURI().toString();
-                } finally {
-                    cursor.close();
-                }
-            }
         }
     }
 

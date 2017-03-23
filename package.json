@@ -20,6 +20,27 @@
         }
       },
       "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample"
+    ],
+    [
+      {
+        "raw": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "scope": null,
+        "escapedName": "react-native-image-tools",
+        "name": "react-native-image-tools",
+        "rawSpec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "spec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:npomfret/react-native-image-tools.git",
+          "sshUrl": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+          "httpsUrl": "git+https://github.com/npomfret/react-native-image-tools.git",
+          "gitUrl": "git://github.com/npomfret/react-native-image-tools.git",
+          "shortcut": "github:npomfret/react-native-image-tools",
+          "directUrl": "https://raw.githubusercontent.com/npomfret/react-native-image-tools/master/package.json"
+        }
+      },
+      "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample"
     ]
   ],
   "_from": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
@@ -49,8 +70,8 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "git+ssh://git@github.com/npomfret/react-native-image-tools.git#bfe1edc0054db0bb9a8031bca4bfe2cd5fda35a9",
-  "_shasum": "8bcbb3f843216e55faea4e5b34d4c278e5119ea0",
+  "_resolved": "git+ssh://git@github.com/npomfret/react-native-image-tools.git#ad00854b8fc2b373c9e446c334ce24b8de70bdad",
+  "_shasum": "3f7294648ca36211020b1658081978df3633bc67",
   "_shrinkwrap": null,
   "_spec": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
   "_where": "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample",
