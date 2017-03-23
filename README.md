@@ -11,13 +11,13 @@ An example app is [here](https://github.com/npomfret/rn-image-tools-example).
 
 _RNImageTools.openEditor(options)_ returns a promise which when resolved contains a uri to the output image, or null if editing was cancelled.
 
-```$javascript
+```javascript
     import RNImageTools from "react-native-image-tools";
 
     ...
 
     /*
-      imageUri - can be:
+      imageUri - the input image, can be:
         path "/foo/bar/image.jpeg"
         file url "file:///foo/bar/image.jpeg"
         url "http://foo.com/bar/image.jpeg"
@@ -36,14 +36,18 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
     /*
       preserveMetadata - true or false
     */
+    
+    /*
+      saveTo - 'photos' or 'temp'
+    */
 
-    e.g.
     try {
       const uri = await RNImageTools.openEditor({
         imageUri,
         outputFormat,
         quality,
-        preserveMetadata
+        preserveMetadata,
+        saveTo
       });
 
       console.log("edited uri", uri);
