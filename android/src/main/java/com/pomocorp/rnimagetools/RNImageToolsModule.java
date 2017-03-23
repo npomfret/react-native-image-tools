@@ -20,6 +20,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
 
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
@@ -112,28 +113,36 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             if (requestCode != this.requestCode)
                 return;
 
-            if(data == null || resultCode != RESULT_OK) {
-                reject();
+            String realPathFromURI = null;
+            if(resultCode == RESULT_CANCELED) {
+                //cool - they pressed the back button
+            } else if (resultCode == RESULT_OK) {
+                if(data == null) {
+                    reject("no data");
+                    return;
+                }
+
+                Uri uri = uriFrom(data);
+
+                if(uri != null) {
+                    realPathFromURI = resolveUri(uri);
+                } else {
+                    reject("no output uri");
+                    return;
+                }
+            } else {
+                reject("unrecognised return code");
                 return;
             }
-
-            Uri uri = uriFrom(data);
-
-            if(uri == null) {
-                reject();
-                return;
-            }
-
-            String realPathFromURI = resolveUri(uri);
 
             while (!callbacks.isEmpty()) {
                 callbacks.remove(0).resolve(realPathFromURI);
             }
         }
 
-        private void reject() {
+        private void reject(String reason) {
             while (!callbacks.isEmpty()) {
-                callbacks.remove(0).reject("-1", "Cancelled");
+                callbacks.remove(0).reject("error", reason);
             }
         }
 
