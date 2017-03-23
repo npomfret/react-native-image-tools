@@ -6,7 +6,10 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
 
+import com.adobe.android.common.io.FileUtils;
+import com.adobe.android.common.util.IOUtils;
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
@@ -15,8 +18,16 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
+import org.apache.sanselan.ImageReadException;
+import org.apache.sanselan.ImageWriteException;
+import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
+import org.apache.sanselan.formats.jpeg.JpegImageParser;
+import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
+import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
+
 import java.io.File;
-import java.lang.reflect.Field;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,8 +39,8 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_GALLERY_PICKER = 2233;
 
     private final ReactApplicationContext reactContext;
-    private final SelectImageListener galleryListener;
-    private final SelectImageListener editorListener;
+    private final GalleryListener galleryListener;
+    private final EditorListener editorListener;
 
     public RNImageToolsModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -53,22 +64,20 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void openGallery(ReadableMap options, Promise promise) {
-        galleryListener.add(promise);
-
+    public void selectImage(ReadableMap options, Promise promise) {
         Intent galleryPickerIntent = new Intent();
         galleryPickerIntent.setType("image/*");
         galleryPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
 
         String title = options.hasKey("title") ? options.getString("title") : "choose image";//where does this appear?
 
+        galleryListener.add(promise);
+
         getReactApplicationContext().startActivityForResult(Intent.createChooser(galleryPickerIntent, title), REQ_CODE_GALLERY_PICKER, null);
     }
 
     @ReactMethod
     public void openEditor(ReadableMap options, Promise promise) {
-        editorListener.add(promise);
-
         try {
             Uri imageUri;
             if(options.hasKey("imageUri"))
@@ -80,7 +89,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
             Bitmap.CompressFormat format = Bitmap.CompressFormat.JPEG;
             if(options.hasKey("outputFormat")) {
-                Bitmap.CompressFormat.valueOf(options.getString("outputFormat"));
+                format = Bitmap.CompressFormat.valueOf(options.getString("outputFormat"));
             }
 
             int quality = 80;
@@ -88,11 +97,31 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 quality = options.getInt("quality");
             }
 
+            String saveTo = "photos";
+            if(options.hasKey("saveTo")) {
+                saveTo = options.getString("saveTo");
+            }
+
+            TiffOutputSet originalImageMetaData = null;
+            if(options.hasKey("preserveMetadata")) {
+                boolean preserveMetadata = options.getBoolean("preserveMetadata");
+//            if(preserveMetadata) {
+//                String realFilePath = IOUtils.getRealFilePath(reactContext, imageUri);
+//                JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) new JpegImageParser().getMetadata(new File(realFilePath));
+//                originalImageMetaData = jpegImageMetadata.getExif().getOutputSet();
+//            }
+            }
+
+            editorListener.add(promise, originalImageMetaData);
+
             AdobeImageIntent.Builder builder = new AdobeImageIntent.Builder(reactContext)
                     .setData(imageUri)
                     .withOutputFormat(format)
                     .withOutputQuality(quality)
                     .withNoExitConfirmation(true);
+
+            if(!saveTo.equals("photos"))
+                builder.withOutput(File.createTempFile("rnimagetools.", "." + format.name(), reactContext.getCacheDir()));
 
             getReactApplicationContext().startActivityForResult(builder.build(), REQ_CODE_CSDK_IMAGE_EDITOR, null);
         } catch (Exception e) {
@@ -135,12 +164,16 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 return;
             }
 
+            resolve(realPathFromURI);
+        }
+
+        protected void resolve(String realPathFromURI) {
             while (!callbacks.isEmpty()) {
                 callbacks.remove(0).resolve(realPathFromURI);
             }
         }
 
-        private void reject(String reason) {
+        protected void reject(String reason) {
             while (!callbacks.isEmpty()) {
                 callbacks.remove(0).reject("error", reason);
             }
@@ -188,24 +221,38 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     private class EditorListener extends SelectImageListener {
+        private TiffOutputSet originalImageMetadata;
+
         public EditorListener(int code) {
             super(code);
         }
 
         @Override
         protected Uri uriFrom(Intent data) {
-            return data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
+            Uri outputUri = data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
+
+//            if(outputUri != null && this.originalImageMetadata != null) {
+//                String realFilePath = IOUtils.getRealFilePath(reactContext, outputUri);
+//
+//                try {
+//                    FileOutputStream os = new FileOutputStream(realFilePath);
+//                    try {
+//                        new ExifRewriter().updateExifMetadataLossy(new File(realFilePath), os, originalImageMetadata);
+//                    } finally {
+//                        os.close();
+//                    }
+//                } catch (ImageReadException | IOException | ImageWriteException e) {
+//                    Log.e("RNImageTools", "failed to copy original image metadata", e);
+//                }
+//            }
+
+            return outputUri;
+        }
+
+        public void add(Promise promise, TiffOutputSet originalImageMetadata) {
+            this.originalImageMetadata = originalImageMetadata;
+            super.add(promise);
         }
     }
 
-    private static void setField(Field field, Object newValue) throws Exception {
-        field.setAccessible(true);
-
-//        Field modifiersField = Field.class.getDeclaredField("modifiers");
-//        modifiersField.setAccessible(true);
-//        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-        field.set(null, newValue);
-        field.setAccessible(false);
-    }
 }
