@@ -13,6 +13,8 @@
 @property (nonatomic, strong) RCTPromiseRejectBlock reject;
 @property (nonatomic, strong) NSString* outputFormat;
 @property (nonatomic, retain) NSNumber* quality;
+@property (nonatomic, retain) NSMutableData* originalImageMetaData;
+@property (nonatomic, strong) NSString* saveTo;
 
 @property (nonatomic, strong) AdobeUXImageEditorViewController *controller;
 
@@ -93,6 +95,13 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         self.outputFormat = @"JPEG";
     }
     
+    self.saveTo = options[@"saveTo"];
+    if(!self.saveTo) {
+        self.saveTo = @"photos";
+    }
+    
+    self.originalImageMetaData = nil;
+    
     NSURL *imageURL = [NSURL URLWithString:uri];
 
     if([uri hasPrefix:@"assets-library"]){
@@ -101,9 +110,15 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         dispatch_group_t group = dispatch_group_create();
         dispatch_group_enter(group);
         
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
         __block UIImage *image;
+        __block NSMutableData *metadata = nil;
+
+        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
         [library assetForURL:[NSURL URLWithString:uri] resultBlock:^(ALAsset *asset) {
+            if(options[@"preserveMetadata"]) {
+                metadata = [[asset defaultRepresentation] metadata];
+            }
+            
             image = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullResolutionImage]];
             dispatch_group_leave(group);
         } failureBlock:^(NSError *error) {
@@ -113,14 +128,18 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         }];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
             // end necessary stuff here ;(
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
             
+            self.originalImageMetaData = metadata;
             [self sendToEditor:image];
         });
     } else {
         NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
         UIImage *image = [UIImage imageWithData:imageData];
+        
+        
+        //todo - get metadata from image
         
         [self sendToEditor:image];
     }
@@ -163,20 +182,31 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     NSURL* localUrl = (NSURL *)[info valueForKey:UIImagePickerControllerReferenceURL];
     
     [picker dismissModalViewControllerAnimated:YES];
-
+    
     self.resolve([localUrl absoluteString]);
 }
 
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (void) saveImage:(UIImage *) image {
-    NSData* data = [self processImage:image];
+    NSData* imageData = [self processImage:image];
     
-    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
-    
-    [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
-    
-    NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
-    self.resolve([fileUrl absoluteString]);
+    if(self.saveTo == @"photos") {
+        [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:self.originalImageMetaData completionBlock:^(NSURL* url, NSError* error) {
+            if (error == nil) {
+                //path isn't really applicable here (this is an asset uri), but left it in for backward comparability
+                self.resolve([url absoluteString]);
+            } else {
+                self.reject(@"error", error.description, nil);
+            }
+        }];
+    } else {
+        NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
+        
+        [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:imageData attributes:nil];
+        
+        NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
+        self.resolve([fileUrl absoluteString]);
+    }
 }
 
 - (NSData*)processImage:(UIImage*)image
@@ -185,6 +215,15 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         return UIImagePNGRepresentation(image);
     } else {//assume its a jpeg, nothing else is supported
         return UIImageJPEGRepresentation(image, [self.quality floatValue] / 100.0f);
+    }
+}
+
+- (NSData*)imageData:(NSURL*)imageUrl
+{
+    if (self.outputFormat == @"PNG") {
+        return [NSData dataWithData:UIImagePNGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]])];
+    } else {//assume its a jpeg, nothing else is supported
+        return [NSData dataWithData:UIImageJPEGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]], 1)];
     }
 }
 
