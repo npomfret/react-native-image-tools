@@ -11,13 +11,13 @@ An example app is [here](https://github.com/npomfret/rn-image-tools-example).
 
 _RNImageTools.openEditor(options)_ returns a promise which when resolved contains a uri to the output image, or null if editing was cancelled.
 
-| name | default value | |
-| ------------- |:-------------:| -----:|
-| imageUri | n/a | supported formats include _path_ (e.g. `/foo/bar/image.jpeg`), _file url_ (e.g. `file:///foo/bar/image.jpeg`), _url_ (e.g. `http://foo.com/bar/image.jpeg`, _asset-uri_ (iOS ony, e.g. `assets-library://asset/asset.JPG?id=foo&EXT=JPG`), _content-uri_ (android only`content://media/external/images/foo/bar/JPEG`) |
-| outputFormat | JPEG | allowed values are `JPEG` or `PNG` - must correspond to the input image type (generating PNG from JPEG or vider-vesa is not supported) |
-| quality | 80 (Ignored for PNG)| integer value between 0 and 100 representing the JPEG compression % |
-| preserveMetadata | n/a | copies image metadata (exif tags) from the input image to the output image |
-| saveTo | photos | allowed values are `photos` or `temp` - determines where the output image will be saved (`temp` writes to the application temp folder, `photos` writes to the default image store on the device  |
+| name | description | default value | type |
+| :---: | :---: | :---: | :--- |
+| imageUri | the input image | n/a | `string`, supported formats include _path_ (e.g. `/foo/bar/image.jpeg`), _file url_ (e.g. `file:///foo/bar/image.jpeg`), _url_ (e.g. `http://foo.com/bar/image.jpeg`, _asset-uri_ (iOS ony, e.g. `assets-library://asset/asset.JPG?id=foo&EXT=JPG`), _content-uri_ (android only`content://media/external/images/foo/bar/JPEG`) |
+| outputFormat | the image type, must correspond to the input image type (generating PNG from JPEG or vider-vesa is not supported) | JPEG | `string`, either _'JPEG'_ or _'PNG'_ |
+| quality | representing the JPEG compression % (Ignored for PNG) | 80 | `integer`, a value between _0_ and _100_ |
+| preserveMetadata | copies image metadata (exif tags) from the input image to the output image | true | `boolean` |
+| saveTo | determines where the output image will be saved (`temp` writes to the application temp folder, `photos` writes to the default image store on the device | photos | `string`, _'photos'_ or _'temp'_ |
 
 ```javascript
     import RNImageTools from "react-native-image-tools";
