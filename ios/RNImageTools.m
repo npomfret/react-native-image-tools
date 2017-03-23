@@ -217,12 +217,42 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         }];
     } else {
         NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
-        
+
+        if(self.originalImageMetaData) {
+            imageData = [self addImageMetatData:imageData metadata:self.originalImageMetaData];
+        }
+
         [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:imageData attributes:nil];
-        
-        NSURL *fileUrl = [NSURL fileURLWithPath:tmpFile];
-        self.resolve([fileUrl absoluteString]);
+        self.resolve([[NSURL fileURLWithPath:tmpFile] absoluteString]);
     }
+}
+
+// thanks to http://stackoverflow.com/questions/19033974/how-do-you-overwrite-image-metadata
+- (NSData*)addImageMetatData:(NSData*)imageData metadata:(NSMutableDictionary*)metadataAsMutable
+{
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef) imageData, NULL);
+    
+    NSDictionary* metadata = (NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source,0,NULL));
+   
+    NSMutableData *outputData = [NSMutableData data];
+    CGImageDestinationRef destination = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)outputData,CGImageSourceGetType(source),1,NULL);
+
+    if(!destination) {
+        NSLog(@"Error: Could not create image destination");
+        return imageData;
+    }
+
+    CGImageDestinationAddImageFromSource(destination,source,0, (__bridge CFDictionaryRef) metadataAsMutable);
+    
+    BOOL success = CGImageDestinationFinalize(destination);
+    if(!success) {
+        NSLog(@"Error: Could not create data from image destination");
+        return imageData;
+    }
+
+    CFRelease(destination);
+    
+    return outputData;
 }
 
 - (NSData*)processImage:(UIImage*)image
