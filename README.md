@@ -55,7 +55,6 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
 ### todo
 
  * support all file urls (and paths)
- * return null when cancelled instead of error
  * preserve metadata
    * ios support for non-asset image source
    * ios support for non-asset image destination
