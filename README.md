@@ -58,9 +58,7 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
 
 ### todo
 
- * support all file urls (and paths)
  * preserve metadata
-   * ios support for non-asset image source
    * ios support for non-asset image destination
    * android support
  * support more oof the underlying Adobe API...  
