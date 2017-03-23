@@ -40,10 +40,10 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
     e.g.
     try {
       const uri = await RNImageTools.openEditor({
-        imageUri: uri,
-        outputFormat: this.state.outputFormat,
-        quality: parseInt(this.state.quality, 10),
-        preserveMetadata: true
+        imageUri,
+        outputFormat,
+        quality,
+        preserveMetadata
       });
 
       console.log("edited uri", uri);
