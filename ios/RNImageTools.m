@@ -104,7 +104,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     
     NSURL *imageURL = [NSURL URLWithString:uri];
 
-    if([uri hasPrefix:@"assets-library"]){
+    if([uri hasPrefix:@"assets-library"]) {
 
         //no idea why this is necessary, or even  correct (but it crashes without it) :(
         dispatch_group_t group = dispatch_group_create();
@@ -123,7 +123,6 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
             dispatch_group_leave(group);
         } failureBlock:^(NSError *error) {
             NSLog(@"Error: %@ %@", error, [error userInfo]);
-            reject(@"Error", [error localizedDescription], nil);
             dispatch_group_leave(group);
         }];
 
@@ -131,13 +130,26 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
             // end necessary stuff here ;(
             dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
             
-            self.originalImageMetaData = metadata;
-            [self sendToEditor:image];
+            if(!image) {
+                return reject(@"Error", @"input image missing", nil);
+            } else {
+                self.originalImageMetaData = metadata;
+                [self sendToEditor:image];
+            }
         });
     } else {
-        NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-        UIImage *image = [UIImage imageWithData:imageData];
+        NSData *imageData;
+        if([uri hasPrefix:@"/"]) {
+            imageData = [NSData dataWithContentsOfFile:imageURL];
+        } else {
+            imageData = [NSData dataWithContentsOfURL:imageURL];
+        }
         
+        if(!imageData) {
+            return reject(@"Error", @"input image not found", nil);
+        }
+        
+        UIImage *image = [UIImage imageWithData:imageData];
         
         //todo - get metadata from image
         
