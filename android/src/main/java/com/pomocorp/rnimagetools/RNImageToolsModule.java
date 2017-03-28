@@ -193,6 +193,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
             if(resultCode == RESULT_CANCELED) {
                 //cool - they pressed the back button
+                resolve(null);
             } else if (resultCode == RESULT_OK) {
                 if(data == null) {
                     reject("no data");
