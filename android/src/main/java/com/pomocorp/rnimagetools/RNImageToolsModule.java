@@ -6,11 +6,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Log;
 
-import com.adobe.android.common.io.FileUtils;
-import com.adobe.android.common.util.IOUtils;
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
+import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -18,21 +16,15 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
-import org.apache.sanselan.ImageReadException;
-import org.apache.sanselan.ImageWriteException;
-import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
-import org.apache.sanselan.formats.jpeg.JpegImageParser;
-import org.apache.sanselan.formats.jpeg.exifRewrite.ExifRewriter;
 import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.*;
 
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 1122;
@@ -116,6 +108,30 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
             AdobeImageIntent.Builder builder = new AdobeImageIntent.Builder(reactContext)
                     .setData(imageUri)
+                    .withToolList(new ToolsFactory.Tools[]{
+                            CROP,
+                            ORIENTATION,
+                            ENHANCE,
+                            TEXT,
+                            DRAW,
+                            MEME,
+                            FOCUS,
+                            VIGNETTE,
+                            SHARPNESS,
+                            BLUR,
+                            COLOR,
+                            EFFECTS,
+                            ADJUST,
+                            PERSPECTIVE,
+                            REDEYE,
+                            WHITEN,
+                            BLEMISH,
+                            SPLASH,
+                            LIGHTING,
+                            OVERLAYS,
+                            FRAMES,
+                            STICKERS,
+                    })
                     .withOutputFormat(format)
                     .withOutputQuality(quality)
                     .withNoExitConfirmation(true);
