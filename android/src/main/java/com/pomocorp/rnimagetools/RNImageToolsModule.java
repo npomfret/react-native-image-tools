@@ -187,7 +187,8 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 Uri uri = uriFrom(data);
 
                 if(uri != null) {
-                    realPathFromURI = resolveUri(uri);
+                    resolve(uri.toString());
+                    return;
                 } else {
                     reject("no output uri");
                     return;
@@ -196,8 +197,6 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 reject("unrecognised return code");
                 return;
             }
-
-            resolve(realPathFromURI);
         }
 
         protected void resolve(String realPathFromURI) {
