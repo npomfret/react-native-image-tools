@@ -41,6 +41,7 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
 
 ### todo
 
- * preserve image metadata on android
+ * preserve image metadata on android (in progress)
+ * merge metadata, rather than overwrite
  * customise the tool array https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m#L49
  * support more oof the underlying Adobe API...  

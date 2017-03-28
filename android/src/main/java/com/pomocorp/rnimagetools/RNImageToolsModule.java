@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
@@ -16,19 +18,50 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
-import org.apache.sanselan.formats.tiff.write.TiffOutputSet;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.*;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.ADJUST;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLEMISH;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLUR;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.COLOR;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.CROP;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.DRAW;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.EFFECTS;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.ENHANCE;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.FOCUS;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.FRAMES;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.LIGHTING;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.MEME;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.ORIENTATION;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.OVERLAYS;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.PERSPECTIVE;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.REDEYE;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.SHARPNESS;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.SPLASH;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.STICKERS;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.TEXT;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.VIGNETTE;
+import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.WHITEN;
 
 public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private static final int REQ_CODE_CSDK_IMAGE_EDITOR = 1122;
     private static final int REQ_CODE_GALLERY_PICKER = 2233;
+    private static final String TAG = "rnimagetools";
 
     private final ReactApplicationContext reactContext;
     private final GalleryListener galleryListener;
@@ -72,7 +105,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     public void openEditor(ReadableMap options, Promise promise) {
         try {
             Uri imageUri;
-            if(options.hasKey("imageUri"))
+            if (options.hasKey("imageUri"))
                 imageUri = Uri.parse(options.getString("imageUri"));
             else {
                 promise.reject("error", "imageUri not present");
@@ -80,28 +113,34 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             }
 
             Bitmap.CompressFormat format = Bitmap.CompressFormat.JPEG;
-            if(options.hasKey("outputFormat")) {
+            if (options.hasKey("outputFormat")) {
                 format = Bitmap.CompressFormat.valueOf(options.getString("outputFormat"));
             }
 
             int quality = 80;
-            if(options.hasKey("quality")) {
+            if (options.hasKey("quality")) {
                 quality = options.getInt("quality");
             }
 
             String saveTo = "photos";
-            if(options.hasKey("saveTo")) {
+            if (options.hasKey("saveTo")) {
                 saveTo = options.getString("saveTo");
             }
 
+            boolean preserveMetadata = true;
+            if (options.hasKey("preserveMetadata"))
+                preserveMetadata = options.getBoolean("preserveMetadata");
+
             TiffOutputSet originalImageMetaData = null;
-            if(options.hasKey("preserveMetadata")) {
-                boolean preserveMetadata = options.getBoolean("preserveMetadata");
-//            if(preserveMetadata) {
-//                String realFilePath = IOUtils.getRealFilePath(reactContext, imageUri);
-//                JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) new JpegImageParser().getMetadata(new File(realFilePath));
-//                originalImageMetaData = jpegImageMetadata.getExif().getOutputSet();
-//            }
+            if(preserveMetadata && format.equals(Bitmap.CompressFormat.JPEG)) {
+                try {
+                    String realFilePath = resolveUri(imageUri);//looks like: file:/some-path/blah
+                    File file = new File(Uri.parse(realFilePath).getPath());
+                    JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(file);
+                    originalImageMetaData = jpegImageMetadata.getExif().getOutputSet();
+                } catch (Exception e) {
+                    Log.w(TAG, "failed to read image metadata", e);
+                }
             }
 
             editorListener.add(promise, originalImageMetaData);
@@ -136,7 +175,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                     .withOutputQuality(quality)
                     .withNoExitConfirmation(true);
 
-            if(!saveTo.equals("photos"))
+            if (!saveTo.equals("photos"))
                 builder.withOutput(File.createTempFile("rnimagetools.", "." + format.name(), reactContext.getCacheDir()));
 
             getReactApplicationContext().startActivityForResult(builder.build(), REQ_CODE_CSDK_IMAGE_EDITOR, null);
@@ -154,11 +193,11 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
              */
 
         String scheme = uri.getScheme();
-        if(scheme == null) {
+        if (scheme == null) {
             return uri.getPath();
-        } else if("file".equals(scheme)) {
+        } else if ("file".equals(scheme)) {
             return uri.getPath();
-        } else if("content".equals(scheme)) {
+        } else if ("content".equals(scheme)) {
             Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
 
             if (cursor == null) { // not from the local database
@@ -191,18 +230,18 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             if (requestCode != this.requestCode)
                 return;
 
-            if(resultCode == RESULT_CANCELED) {
+            if (resultCode == RESULT_CANCELED) {
                 //cool - they pressed the back button
                 resolve(null);
             } else if (resultCode == RESULT_OK) {
-                if(data == null) {
+                if (data == null) {
                     reject("no data");
                     return;
                 }
 
                 Uri uri = uriFrom(data);
 
-                if(uri != null) {
+                if (uri != null) {
                     resolve(uri.toString());
                 } else {
                     reject("no output uri");
@@ -253,20 +292,31 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         protected Uri uriFrom(Intent data) {
             Uri outputUri = data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
 
-//            if(outputUri != null && this.originalImageMetadata != null) {
-//                String realFilePath = IOUtils.getRealFilePath(reactContext, outputUri);
-//
-//                try {
-//                    FileOutputStream os = new FileOutputStream(realFilePath);
-//                    try {
-//                        new ExifRewriter().updateExifMetadataLossy(new File(realFilePath), os, originalImageMetadata);
-//                    } finally {
-//                        os.close();
-//                    }
-//                } catch (ImageReadException | IOException | ImageWriteException e) {
-//                    Log.e("RNImageTools", "failed to copy original image metadata", e);
-//                }
-//            }
+            if (outputUri != null && this.originalImageMetadata != null) {
+                String inputFilePath = resolveUri(outputUri);
+
+                try {
+                    File editorOutputFile = new File(Uri.parse(inputFilePath).getPath());
+                    ImageMetadata metadata = Imaging.getMetadata(editorOutputFile);
+                    System.out.println(metadata);
+
+                    File outputFile = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + ".jpeg");
+
+                    FileOutputStream output = new FileOutputStream(outputFile);
+                    try {
+                        new ExifRewriter()
+                                .updateExifMetadataLossy(editorOutputFile, output, originalImageMetadata);
+                    } finally {
+                        output.close();
+                    }
+
+                    MediaScannerConnection.scanFile(reactContext, new String[]{outputFile.getAbsolutePath()}, null, null);
+
+                    return Uri.fromFile(outputFile);
+                } catch (ImageReadException | IOException | ImageWriteException e) {
+                    Log.e("RNImageTools", "failed to copy original image metadata", e);
+                }
+            }
 
             return outputUri;
         }
