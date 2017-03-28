@@ -175,7 +175,6 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             if (requestCode != this.requestCode)
                 return;
 
-            String realPathFromURI = null;
             if(resultCode == RESULT_CANCELED) {
                 //cool - they pressed the back button
             } else if (resultCode == RESULT_OK) {
@@ -188,24 +187,21 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
                 if(uri != null) {
                     resolve(uri.toString());
-                    return;
                 } else {
                     reject("no output uri");
-                    return;
                 }
             } else {
-                reject("unrecognised return code");
-                return;
+                reject("unrecognised return code: " + resultCode);
             }
         }
 
-        protected void resolve(String realPathFromURI) {
+        void resolve(String realPathFromURI) {
             while (!callbacks.isEmpty()) {
                 callbacks.remove(0).resolve(realPathFromURI);
             }
         }
 
-        protected void reject(String reason) {
+        void reject(String reason) {
             while (!callbacks.isEmpty()) {
                 callbacks.remove(0).reject("error", reason);
             }
