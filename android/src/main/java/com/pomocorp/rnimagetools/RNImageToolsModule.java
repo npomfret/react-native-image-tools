@@ -17,6 +17,8 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
@@ -24,6 +26,10 @@ import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
+import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldType;
+import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputField;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 
 import java.io.File;
@@ -84,6 +90,41 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void imageMetadata(String imageUri, Promise promise) {
+        try {
+            String realFilePath = resolveUri(Uri.parse(imageUri));
+            File file = new File(Uri.parse(realFilePath).getPath());
+            JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(file);
+            TiffOutputSet exifData = jpegImageMetadata.getExif().getOutputSet();
+
+            WritableNativeMap map = new WritableNativeMap();
+            for (TiffOutputDirectory directory : exifData.getDirectories()) {
+                WritableNativeArray dir = new WritableNativeArray();
+
+                for (TiffOutputField field : directory.getFields()) {
+                    FieldType fieldType = field.fieldType;
+                    TagInfo tagInfo = field.tagInfo;
+                    Object value = tagInfo.getValue(jpegImageMetadata.findEXIFValue(tagInfo));
+                    if (value == null)
+                        continue;
+
+                    WritableNativeMap f = new WritableNativeMap();
+                    f.putString("type", fieldType.getName());
+                    f.putString("name", tagInfo.name);
+                    f.putString("description", tagInfo.getDescription());
+                    f.putString("value", value.toString());
+                    dir.pushMap(f);
+                }
+
+                map.putArray(directory.description(), dir);
+            }
+        } catch (ImageReadException | IOException | ImageWriteException e) {
+            Log.e(TAG, "failed to get metadata from  " + imageUri, e);
+            promise.reject("error", "metadata extract failed", e);
+        }
+    }
+
+    @ReactMethod
     public void authorize(String clientId, String clientSecret, String clientUri) {
         //ignored for android
     }
@@ -132,7 +173,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 preserveMetadata = options.getBoolean("preserveMetadata");
 
             TiffOutputSet originalImageMetaData = null;
-            if(preserveMetadata && format.equals(Bitmap.CompressFormat.JPEG)) {
+            if (preserveMetadata && format.equals(Bitmap.CompressFormat.JPEG)) {
                 try {
                     String realFilePath = resolveUri(imageUri);//looks like: file:/some-path/blah
                     File file = new File(Uri.parse(realFilePath).getPath());
