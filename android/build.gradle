@@ -37,7 +37,7 @@ allprojects {
 }
 
 dependencies {
-    compile 'org.apache.commons:commons-imaging:1.0-SNAPSHOT'
+    compile fileTree(dir: "libs", include: ["*.jar"])
     compile 'com.adobe.creativesdk.foundation:auth:0.9.1251'
     compile 'com.adobe.creativesdk:image:4.8.4'
     compile 'com.localytics.android:library:3.8.0'
