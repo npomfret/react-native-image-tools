@@ -2,11 +2,10 @@ package com.pomocorp.rnimagetools;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.provider.MediaStore;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
@@ -17,8 +16,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableNativeArray;
-import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.bridge.WritableMap;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
@@ -26,11 +24,8 @@ import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
-import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldType;
-import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
-import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
-import org.apache.commons.imaging.formats.tiff.write.TiffOutputField;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,6 +67,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     private final ReactApplicationContext reactContext;
     private final GalleryListener galleryListener;
     private final EditorListener editorListener;
+    private final ContentResolver contentResolver;
 
     public RNImageToolsModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -82,6 +78,8 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
         editorListener = new EditorListener(REQ_CODE_CSDK_IMAGE_EDITOR);
         reactContext.addActivityEventListener(editorListener);
+
+        contentResolver = new ContentResolver(reactContext);
     }
 
     @Override
@@ -90,38 +88,22 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void imageMetadata(String imageUri, Promise promise) {
-        try {
-            String realFilePath = resolveUri(Uri.parse(imageUri));
-            File file = new File(Uri.parse(realFilePath).getPath());
-            JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(file);
-            TiffOutputSet exifData = jpegImageMetadata.getExif().getOutputSet();
+    public void imageMetadata(final String imageUri, final Promise promise) {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    byte[] bytes = contentResolver.readBytes(imageUri);
 
-            WritableNativeMap map = new WritableNativeMap();
-            for (TiffOutputDirectory directory : exifData.getDirectories()) {
-                WritableNativeArray dir = new WritableNativeArray();
+                    ImageMetadataTools imageMetadataTools = ImageMetadataTools.createImageMetadata(bytes);
 
-                for (TiffOutputField field : directory.getFields()) {
-                    FieldType fieldType = field.fieldType;
-                    TagInfo tagInfo = field.tagInfo;
-                    Object value = tagInfo.getValue(jpegImageMetadata.findEXIFValue(tagInfo));
-                    if (value == null)
-                        continue;
-
-                    WritableNativeMap f = new WritableNativeMap();
-                    f.putString("type", fieldType.getName());
-                    f.putString("name", tagInfo.name);
-                    f.putString("description", tagInfo.getDescription());
-                    f.putString("value", value.toString());
-                    dir.pushMap(f);
+                    promise.resolve(imageMetadataTools.asMap());
+                } catch (Exception e) {
+                    Log.e(TAG, "failed to get metadata from  " + imageUri, e);
+                    promise.reject("error", "metadata extract failed", e);
                 }
-
-                map.putArray(directory.description(), dir);
             }
-        } catch (ImageReadException | IOException | ImageWriteException e) {
-            Log.e(TAG, "failed to get metadata from  " + imageUri, e);
-            promise.reject("error", "metadata extract failed", e);
-        }
+        });
     }
 
     @ReactMethod
@@ -175,7 +157,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             TiffOutputSet originalImageMetaData = null;
             if (preserveMetadata && format.equals(Bitmap.CompressFormat.JPEG)) {
                 try {
-                    String realFilePath = resolveUri(imageUri);//looks like: file:/some-path/blah
+                    String realFilePath = contentResolver.resolveUri(imageUri);//looks like: file:/some-path/blah
                     File file = new File(Uri.parse(realFilePath).getPath());
                     JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(file);
                     originalImageMetaData = jpegImageMetadata.getExif().getOutputSet();
@@ -222,39 +204,6 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             getReactApplicationContext().startActivityForResult(builder.build(), REQ_CODE_CSDK_IMAGE_EDITOR, null);
         } catch (Exception e) {
             promise.reject("error", "failed to start editor", e);
-        }
-    }
-
-    private String resolveUri(Uri uri) {
-            /*
-            content://com.android.providers.media.documents/document/image%3A519
-            content://media/external/images/media/430
-            ... or maybe (like from dropbox)
-            file:///storage/emulated/0/Android/data/com.dropbox.android/files/u3578267/scratch/testing/2015-04-26%2017.00.22.jpg
-             */
-
-        String scheme = uri.getScheme();
-        if (scheme == null) {
-            return uri.getPath();
-        } else if ("file".equals(scheme)) {
-            return uri.getPath();
-        } else if ("content".equals(scheme)) {
-            Cursor cursor = reactContext.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
-
-            if (cursor == null) { // not from the local database
-                return uri.toString();
-            } else {
-                cursor.moveToFirst();
-                try {
-                    int idx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                    String filePath = cursor.getString(idx);
-                    return new File(filePath).toURI().toString();
-                } finally {
-                    cursor.close();
-                }
-            }
-        } else {
-            return uri.toString();
         }
     }
 
@@ -334,13 +283,14 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             Uri outputUri = data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
 
             if (outputUri != null && this.originalImageMetadata != null) {
-                String inputFilePath = resolveUri(outputUri);
+                String editorOutputPath = contentResolver.resolveUri(outputUri);
 
                 try {
-                    File editorOutputFile = new File(Uri.parse(inputFilePath).getPath());
-                    ImageMetadata metadata = Imaging.getMetadata(editorOutputFile);
-                    System.out.println(metadata);
+                    //todo: deal with width, height and orientation metadata as they may not be correct after being edited
+                    ImageMetadataTools imageMetadataAfter = ImageMetadataTools.createImageMetadata(contentResolver.readBytes(editorOutputPath));
+                    WritableMap writableMap = imageMetadataAfter.asMap();
 
+                    File editorOutputFile = new File(Uri.parse(editorOutputPath).getPath());
                     File outputFile = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + ".jpeg");
 
                     FileOutputStream output = new FileOutputStream(outputFile);
