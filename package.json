@@ -20,21 +20,42 @@
         }
       },
       "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample"
+    ],
+    [
+      {
+        "raw": "react-native-image-tools@git+https://github.com/npomfret/react-native-image-tools.git",
+        "scope": null,
+        "escapedName": "react-native-image-tools",
+        "name": "react-native-image-tools",
+        "rawSpec": "git+https://github.com/npomfret/react-native-image-tools.git",
+        "spec": "git+https://github.com/npomfret/react-native-image-tools.git",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:npomfret/react-native-image-tools.git",
+          "sshUrl": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+          "httpsUrl": "git+https://github.com/npomfret/react-native-image-tools.git",
+          "gitUrl": "git://github.com/npomfret/react-native-image-tools.git",
+          "shortcut": "github:npomfret/react-native-image-tools",
+          "directUrl": "https://raw.githubusercontent.com/npomfret/react-native-image-tools/master/package.json"
+        }
+      },
+      "/Users/nickpomfret/Documents/github/datr/app/pomochat"
     ]
   ],
-  "_from": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+  "_from": "git+https://github.com/npomfret/react-native-image-tools.git",
   "_id": "react-native-image-tools@1.0.0",
   "_inCache": true,
   "_installable": true,
   "_location": "/react-native-image-tools",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+    "raw": "react-native-image-tools@git+https://github.com/npomfret/react-native-image-tools.git",
     "scope": null,
     "escapedName": "react-native-image-tools",
     "name": "react-native-image-tools",
-    "rawSpec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
-    "spec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+    "rawSpec": "git+https://github.com/npomfret/react-native-image-tools.git",
+    "spec": "git+https://github.com/npomfret/react-native-image-tools.git",
     "type": "hosted",
     "hosted": {
       "type": "github",
@@ -49,11 +70,11 @@
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "git+ssh://git@github.com/npomfret/react-native-image-tools.git#bfe1edc0054db0bb9a8031bca4bfe2cd5fda35a9",
-  "_shasum": "8bcbb3f843216e55faea4e5b34d4c278e5119ea0",
+  "_resolved": "git+https://github.com/npomfret/react-native-image-tools.git#f45f064fb12ee33ae89124ee2d2597f77999a0a9",
+  "_shasum": "7020024bc8a202ab97f6f40c6827e4cc9b092a05",
   "_shrinkwrap": null,
-  "_spec": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
-  "_where": "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample",
+  "_spec": "react-native-image-tools@git+https://github.com/npomfret/react-native-image-tools.git",
+  "_where": "/Users/nickpomfret/Documents/github/datr/app/pomochat",
   "author": "",
   "dependencies": {},
   "description": "## Getting started",

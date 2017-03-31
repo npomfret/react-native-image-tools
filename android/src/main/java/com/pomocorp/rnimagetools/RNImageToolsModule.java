@@ -279,21 +279,17 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         }
 
         @Override
-        protected Uri uriFrom(Intent data) {
-            Uri outputUri = data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
-
-            if (outputUri != null && this.originalImageMetadata != null) {
-                String editorOutputPath = contentResolver.resolveUri(outputUri);
-
+        void resolve(String editorOutputPath) {
+            if (this.originalImageMetadata != null) {
                 try {
                     //todo: deal with width, height and orientation metadata as they may not be correct after being edited
                     ImageMetadataTools imageMetadataAfter = ImageMetadataTools.createImageMetadata(contentResolver.readBytes(editorOutputPath));
-                    WritableMap writableMap = imageMetadataAfter.asMap();
+                    WritableMap metadataAfter = imageMetadataAfter.asMap();
 
                     File editorOutputFile = new File(Uri.parse(editorOutputPath).getPath());
-                    File outputFile = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + ".jpeg");
+                    final File outputFileWithMetadata = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + "_" + editorOutputFile.getName());
 
-                    FileOutputStream output = new FileOutputStream(outputFile);
+                    FileOutputStream output = new FileOutputStream(outputFileWithMetadata);
                     try {
                         new ExifRewriter()
                                 .updateExifMetadataLossy(editorOutputFile, output, originalImageMetadata);
@@ -301,15 +297,23 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                         output.close();
                     }
 
-                    MediaScannerConnection.scanFile(reactContext, new String[]{outputFile.getAbsolutePath()}, null, null);
-
-                    return Uri.fromFile(outputFile);
+                    MediaScannerConnection.scanFile(reactContext, new String[]{outputFileWithMetadata.getAbsolutePath()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                        @Override
+                        public void onScanCompleted(String path, Uri uri) {
+                            EditorListener.super.resolve(outputFileWithMetadata.getAbsolutePath());
+                        }
+                    });
                 } catch (ImageReadException | IOException | ImageWriteException e) {
                     Log.e("RNImageTools", "failed to copy original image metadata", e);
                 }
             }
 
-            return outputUri;
+            super.resolve(editorOutputPath);
+        }
+
+        @Override
+        protected Uri uriFrom(Intent data) {
+            return data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
         }
 
         public void add(Promise promise, TiffOutputSet originalImageMetadata) {
