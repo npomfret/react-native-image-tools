@@ -33,8 +33,20 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
+    NSDictionary *imageMetadata = [RNImageTools imageMetadata: imageURL];
+
+    //hack!
+    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
+    NSMutableDictionary* copy = [imageMetadata mutableCopy];
+    [copy removeObjectForKey:@"{MakerApple}"];
+    //end hack
+    
+    return resolve(copy);
+}
+
++ (NSDictionary*) imageMetadata:(NSURL*) imageURL {
     NSDictionary *imageMetadata;
-    if([imageUri hasPrefix:@"assets-library"]) {
+    if([[imageURL scheme] hasPrefix:@"assets-library"]) {
         NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
         imageMetadata = [asset objectForKey:@"metadata"];
     } else {
@@ -49,13 +61,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
         CFRelease(imageProperties);
     }
     
-    //hack!
-    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
-    NSMutableDictionary* copy = [imageMetadata mutableCopy];
-    [copy removeObjectForKey:@"{MakerApple}"];
-    //end hack
-    
-    return resolve(copy);
+    return imageMetadata;
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
