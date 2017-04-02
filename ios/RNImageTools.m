@@ -18,6 +18,8 @@
 
 @property (nonatomic, strong) AdobeUXImageEditorViewController *controller;
 
++ (BOOL) assetExists:(NSURL*)assetURL;
+
 @end
 
 @implementation RNImageTools
@@ -53,7 +55,7 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     self.resolve = resolve;
     self.reject = reject;
     
-
+    
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
     picker.allowsEditing = NO;
@@ -110,40 +112,19 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     self.originalImageMetaData = nil;
     
     NSURL *imageURL = [NSURL URLWithString:uri];
-
+    
     if([uri hasPrefix:@"assets-library"]) {
-
-        //no idea why this is necessary, or even  correct (but it crashes without it) :(
-        dispatch_group_t group = dispatch_group_create();
-        dispatch_group_enter(group);
         
-        __block UIImage *image;
-        __block NSMutableData *metadata = nil;
-
-        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-        [library assetForURL:[NSURL URLWithString:uri] resultBlock:^(ALAsset *asset) {
-            if(options[@"preserveMetadata"]) {
-                metadata = [[asset defaultRepresentation] metadata];
-            }
-            
-            image = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullResolutionImage]];
-            dispatch_group_leave(group);
-        } failureBlock:^(NSError *error) {
-            NSLog(@"Error: %@ %@", error, [error userInfo]);
-            dispatch_group_leave(group);
-        }];
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            // end necessary stuff here ;(
-            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-            
-            if(!image) {
-                return reject(@"Error", @"input image missing", nil);
-            } else {
-                self.originalImageMetaData = metadata;
-                [self sendToEditor:image];
-            }
-        });
+        NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
+        UIImage *image = asset[@"image"];
+        NSMutableData *metadata = asset[@"metadata"];
+        
+        if(!image) {
+            return reject(@"Error", @"input image missing", nil);
+        } else {
+            self.originalImageMetaData = metadata;
+            [self sendToEditor:image];
+        }
     } else {
         NSData *imageData;
         if([uri hasPrefix:@"/"]) {
@@ -161,11 +142,47 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
             self.originalImageMetaData =  [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL)) mutableCopy];
             CFRelease(imageSource);
         }
-
+        
         UIImage *image = [UIImage imageWithData:imageData];
         
         [self sendToEditor:image];
     }
+}
+
+// thanks to : http://www.codercowboy.com/code-synchronous-alassetlibrary-asset-existence-check/
+enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
+
++ (NSDictionary*) loadImageAsset:(NSURL*)assetURL {
+    __block UIImage *image = nil;
+    __block NSMutableData *metadata = nil;
+    __block NSConditionLock * albumReadLock = [[NSConditionLock alloc] initWithCondition:WDASSETURL_PENDINGREADS];
+    
+    //this *MUST* execute on a background thread, ALAssetLibrary tries to use the main thread and will hang if you're on the main thread.
+    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        ALAssetsLibrary * assetLibrary = [[ALAssetsLibrary alloc] init];
+        [assetLibrary assetForURL:assetURL
+                      resultBlock:^(ALAsset *asset) {
+                          ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
+                          metadata = [defaultRepresentation metadata];
+                          image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
+                          
+                          // notifies the lock that "all tasks are finished"
+                          [albumReadLock lock];
+                          [albumReadLock unlockWithCondition:WDASSETURL_ALLFINISHED];
+                      } failureBlock:^(NSError *error) {
+                          // error handling
+                          NSLog(@"Error: %@ %@", error, [error userInfo]);
+                          // notifies the lock that "all tasks are finished"
+                          [albumReadLock lock];
+                          [albumReadLock unlockWithCondition:WDASSETURL_ALLFINISHED];
+                      }];
+    });
+    
+    // non-busy wait for the asset read to finish (specifically until the condition is "all finished")
+    [albumReadLock lockWhenCondition:WDASSETURL_ALLFINISHED];
+    [albumReadLock unlock];
+    
+    return @{@"image": image, @"metadata": metadata};
 }
 
 - (void) sendToEditor:(UIImage*)image {
@@ -196,7 +213,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 - (void)photoEditorCanceled:(AdobeUXImageEditorViewController *)editor
 {
     [editor dismissModalViewControllerAnimated:YES];
-
+    
     return self.resolve([NSNull null]);
 }
 
@@ -211,7 +228,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (void) saveImage:(UIImage *) image {
-
+    
     NSData* imageData = [self processImage:image];
     
     if([self.saveTo isEqualToString:@"photos"]) {
@@ -225,11 +242,11 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         }];
     } else {
         NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
-
+        
         if(self.originalImageMetaData) {
             imageData = [self addImageMetatData:imageData metadata:self.originalImageMetaData];
         }
-
+        
         [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:imageData attributes:nil];
         self.resolve([[NSURL fileURLWithPath:tmpFile] absoluteString]);
     }
@@ -241,15 +258,15 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef) imageData, NULL);
     
     NSDictionary* metadata = (NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source,0,NULL));
-   
+    
     NSMutableData *outputData = [NSMutableData data];
     CGImageDestinationRef destination = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)outputData,CGImageSourceGetType(source),1,NULL);
-
+    
     if(!destination) {
         NSLog(@"Error: Could not create image destination");
         return imageData;
     }
-
+    
     CGImageDestinationAddImageFromSource(destination,source,0, (__bridge CFDictionaryRef) metadataAsMutable);
     
     BOOL success = CGImageDestinationFinalize(destination);
@@ -257,7 +274,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         NSLog(@"Error: Could not create data from image destination");
         return imageData;
     }
-
+    
     CFRelease(destination);
     
     return outputData;
@@ -305,4 +322,4 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 }
 
 @end
-  
+
