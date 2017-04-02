@@ -34,7 +34,7 @@ public class ImageMetadataTools {
         WritableNativeMap map = new WritableNativeMap();
 
         for (TiffOutputDirectory directory : exifData.getDirectories()) {
-            WritableNativeArray dir = new WritableNativeArray();
+            WritableNativeMap dir = new WritableNativeMap();
 
             for (TiffOutputField field : directory.getFields()) {
                 TagInfo tagInfo = field.tagInfo;
@@ -47,14 +47,10 @@ public class ImageMetadataTools {
                 if (value == null)
                     continue;
 
-                WritableNativeMap f = new WritableNativeMap();
-                f.putString("type", field.fieldType.getName());
-                f.putString("name", tagInfo.name);
-                f.putString("value", value.toString());
-                dir.pushMap(f);
+                dir.putString(tagInfo.name, value.toString());
             }
 
-            map.putArray(directory.description(), dir);
+            map.putMap(directory.description(), dir);
         }
 
         return map;
