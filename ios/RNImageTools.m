@@ -45,9 +45,14 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
         CFRelease(source);
     }
 
-    return resolve(imageMetadata);
-}
+    //hack!
+    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
+    NSMutableDictionary* copy = [imageMetadata mutableCopy];
+    [copy removeObjectForKey:@"{MakerApple}"];
+    //end hack
 
+    return resolve(copy);
+}
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
     [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:clientId
                                                                    clientSecret:clientSecret
@@ -64,7 +69,6 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
 {
     self.resolve = resolve;
     self.reject = reject;
-    
     
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
@@ -173,40 +177,6 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
                       resultBlock:^(ALAsset *asset) {
                           ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
                           
-                          uint8_t *buffer = (Byte*)malloc(defaultRepresentation.size);
-                          NSUInteger length = [defaultRepresentation getBytes:buffer fromOffset: 0.0  length:defaultRepresentation.size error:nil];
-                          NSDictionary *metadata2 = nil;
-                          
-                          if (length != 0)  {
-                              // buffer -> NSData object; free buffer afterwards
-                              NSData *adata = [[NSData alloc] initWithBytesNoCopy:buffer length:defaultRepresentation.size freeWhenDone:YES];
-                              
-                              // identify image type (jpeg, png, RAW file, ...) using UTI hint
-                              NSDictionary* sourceOptionsDict = [NSDictionary dictionaryWithObjectsAndKeys:(id)[defaultRepresentation UTI] ,kCGImageSourceTypeIdentifierHint,nil];
-                              
-                              // create CGImageSource with NSData
-                              CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef) adata, (__bridge CFDictionaryRef) sourceOptionsDict);
-                              
-                              // get imagePropertiesDictionary
-                              CFDictionaryRef imagePropertiesDictionary = CGImageSourceCopyPropertiesAtIndex(sourceRef,0, NULL);
-                              
-                              // get exif data
-                              CFDictionaryRef exifDictRef = (CFDictionaryRef)CFDictionaryGetValue(imagePropertiesDictionary, kCGImagePropertyExifDictionary);
-                              NSDictionary* exifDict = (__bridge NSDictionary*)exifDictRef;
-                              
-                              CFDictionaryRef gpsDictRef = (CFDictionaryRef)CFDictionaryGetValue(imagePropertiesDictionary, kCGImagePropertyGPSDictionary);
-                              NSDictionary* gpsDict = (__bridge NSDictionary*)gpsDictRef;
-                              
-                              metadata2 = @{
-                                  @"exif": exifDict,
-                                  @"gps":gpsDict
-                              };
-                              
-                              //CFRelease(imageRef);
-                              CFRelease(imagePropertiesDictionary);
-                              CFRelease(sourceRef);
-                          }
-                          
                           NSMutableData *metadata = [defaultRepresentation metadata];
                           UIImage *image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
                           long size = [defaultRepresentation size];
@@ -217,7 +187,6 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
                                          @"image": image,
                                          @"filename": filename,
                                          @"metadata": metadata,
-                                         @"metadata2": metadata2,
                                          @"size": @(size),
                                          @"orientation": @(orientation),
                                          @"dimensions": @{
