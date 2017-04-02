@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1B5103C21E91816800B48D40 /* NSDictionary+Merge.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B5103C11E91816800B48D40 /* NSDictionary+Merge.m */; };
 		B3E7B58A1CC2AC0600A0062D /* RNImageTools.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RNImageTools.m */; };
 /* End PBXBuildFile section */
 
@@ -24,6 +25,8 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRNImageTools.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNImageTools.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B5103C01E91814C00B48D40 /* NSDictionary+Merge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+Merge.h"; sourceTree = "<group>"; };
+		1B5103C11E91816800B48D40 /* NSDictionary+Merge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDictionary+Merge.m"; sourceTree = "<group>"; };
 		B3E7B5881CC2AC0600A0062D /* RNImageTools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNImageTools.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* RNImageTools.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNImageTools.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -50,6 +53,8 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				1B5103C11E91816800B48D40 /* NSDictionary+Merge.m */,
+				1B5103C01E91814C00B48D40 /* NSDictionary+Merge.h */,
 				B3E7B5881CC2AC0600A0062D /* RNImageTools.h */,
 				B3E7B5891CC2AC0600A0062D /* RNImageTools.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
@@ -113,6 +118,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B3E7B58A1CC2AC0600A0062D /* RNImageTools.m in Sources */,
+				1B5103C21E91816800B48D40 /* NSDictionary+Merge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
