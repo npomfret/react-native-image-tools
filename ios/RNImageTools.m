@@ -31,10 +31,20 @@
 RCT_EXPORT_MODULE()
 
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-    UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:imageUri]]];
-    NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
-    CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)imageData, NULL);
-    NSMutableDictionary *imageMetadata = [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, NULL)) mutableCopy];
+    NSURL *imageURL = [NSURL URLWithString:imageUri];
+    
+    NSDictionary *imageMetadata;
+    if([imageUri hasPrefix:@"assets-library"]) {
+        NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
+        imageMetadata = [asset objectForKey:@"metadata"];
+    } else {
+        UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:imageURL]];
+        NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
+        CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)imageData, NULL);
+        imageMetadata = [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, NULL)) mutableCopy];
+        CFRelease(source);
+    }
+
     return resolve(imageMetadata);
 }
 
@@ -162,7 +172,41 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
         [assetLibrary assetForURL:assetURL
                       resultBlock:^(ALAsset *asset) {
                           ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
-
+                          
+                          uint8_t *buffer = (Byte*)malloc(defaultRepresentation.size);
+                          NSUInteger length = [defaultRepresentation getBytes:buffer fromOffset: 0.0  length:defaultRepresentation.size error:nil];
+                          NSDictionary *metadata2 = nil;
+                          
+                          if (length != 0)  {
+                              // buffer -> NSData object; free buffer afterwards
+                              NSData *adata = [[NSData alloc] initWithBytesNoCopy:buffer length:defaultRepresentation.size freeWhenDone:YES];
+                              
+                              // identify image type (jpeg, png, RAW file, ...) using UTI hint
+                              NSDictionary* sourceOptionsDict = [NSDictionary dictionaryWithObjectsAndKeys:(id)[defaultRepresentation UTI] ,kCGImageSourceTypeIdentifierHint,nil];
+                              
+                              // create CGImageSource with NSData
+                              CGImageSourceRef sourceRef = CGImageSourceCreateWithData((__bridge CFDataRef) adata, (__bridge CFDictionaryRef) sourceOptionsDict);
+                              
+                              // get imagePropertiesDictionary
+                              CFDictionaryRef imagePropertiesDictionary = CGImageSourceCopyPropertiesAtIndex(sourceRef,0, NULL);
+                              
+                              // get exif data
+                              CFDictionaryRef exifDictRef = (CFDictionaryRef)CFDictionaryGetValue(imagePropertiesDictionary, kCGImagePropertyExifDictionary);
+                              NSDictionary* exifDict = (__bridge NSDictionary*)exifDictRef;
+                              
+                              CFDictionaryRef gpsDictRef = (CFDictionaryRef)CFDictionaryGetValue(imagePropertiesDictionary, kCGImagePropertyGPSDictionary);
+                              NSDictionary* gpsDict = (__bridge NSDictionary*)gpsDictRef;
+                              
+                              metadata2 = @{
+                                  @"exif": exifDict,
+                                  @"gps":gpsDict
+                              };
+                              
+                              //CFRelease(imageRef);
+                              CFRelease(imagePropertiesDictionary);
+                              CFRelease(sourceRef);
+                          }
+                          
                           NSMutableData *metadata = [defaultRepresentation metadata];
                           UIImage *image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
                           long size = [defaultRepresentation size];
@@ -173,6 +217,7 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
                                          @"image": image,
                                          @"filename": filename,
                                          @"metadata": metadata,
+                                         @"metadata2": metadata2,
                                          @"size": @(size),
                                          @"orientation": @(orientation),
                                          @"dimensions": @{
