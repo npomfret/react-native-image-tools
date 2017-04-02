@@ -38,21 +38,25 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
         NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
         imageMetadata = [asset objectForKey:@"metadata"];
     } else {
-        UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:imageURL]];
-        NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
-        CGImageSourceRef source = CGImageSourceCreateWithData((CFDataRef)imageData, NULL);
-        imageMetadata = [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, NULL)) mutableCopy];
-        CFRelease(source);
+        // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
+        CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
+        NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
+        CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+        CFRelease(imageSource);
+        if (imageProperties) {
+            imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
+        }
     }
-
+    
     //hack!
     // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
     NSMutableDictionary* copy = [imageMetadata mutableCopy];
     [copy removeObjectForKey:@"{MakerApple}"];
     //end hack
-
+    
     return resolve(copy);
 }
+
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
     [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:clientId
                                                                    clientSecret:clientSecret
