@@ -14,12 +14,15 @@ to submit your app to Adobe for [review](https://creativesdk.zendesk.com/hc/en-u
 
 ## For iOS
 
+(official docs [here](https://creativesdk.adobe.com/docs/ios/#/articles/gettingstarted/index.html))
+
 * Download the [Adobe Creative SDK](https://creativesdk.adobe.com/downloads.html) for iOS.
-* Create a folder called `Frameworks` at the root of your iOS project
-* Copy the required frameworks (_AdobeCreativeSDKImage.framework_ and _AdobeCreativeSDKCore.framework_) to a `Frameworks` folder at the root of your iOS project
+* Create a folder called `Frameworks` at the root of your iOS project and copy _AdobeCreativeSDKImage.framework_ and _AdobeCreativeSDKCore.framework_ to it
 * in xCode:
   * under _General_ > _Embeded Binaries_, click _+_, click _Add Other_, browse to the frameworks directory and add them both
   * under _Build Settings_ > _Framework Search Paths_  add `$(PROJECT_DIR)/Frameworks`
+  * under _Build Phases_ > click _+_, click _New Run Script Phase_ (note that the order of the build phases is crucial; this _Run Script_ phase **must** come after the _Embed Frameworks_ phase), add this text: 
+    `${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/AdobeCreativeSDKCore.framework/strip-frameworks.sh`
   * clean and build
 
 ## For Android
