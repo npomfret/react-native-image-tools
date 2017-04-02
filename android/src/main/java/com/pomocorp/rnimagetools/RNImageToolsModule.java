@@ -286,7 +286,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                     ImageMetadataTools imageMetadataAfter = ImageMetadataTools.createImageMetadata(contentResolver.readBytes(editorOutputPath));
                     WritableMap metadataAfter = imageMetadataAfter.asMap();
 
-                    File editorOutputFile = new File(Uri.parse(editorOutputPath).getPath());
+                    File editorOutputFile = new File(contentResolver.resolveUri(Uri.parse(editorOutputPath)));
                     final File outputFileWithMetadata = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + "_" + editorOutputFile.getName());
 
                     FileOutputStream output = new FileOutputStream(outputFileWithMetadata);

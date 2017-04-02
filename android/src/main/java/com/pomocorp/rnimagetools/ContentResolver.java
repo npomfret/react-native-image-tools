@@ -58,11 +58,12 @@ public class ContentResolver {
 
     public byte[] readBytes(String uri) throws IOException {
         String realFilePath = resolveUri(Uri.parse(uri));
-        if (realFilePath.startsWith("/") || uri.startsWith("file:/")) {
+
+        if (realFilePath.startsWith("/") || realFilePath.startsWith("file:/")) {
             File file = new File(Uri.parse(realFilePath).getPath());
             return FileUtils.readFileToByteArray(file);
         } else {
-            return IOUtils.toByteArray(new URL(uri));
+            return IOUtils.toByteArray(new URL(realFilePath));
         }
     }
 }
