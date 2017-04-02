@@ -59,28 +59,26 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
 }
 
 + (NSDictionary*) imageMetadataFromImageUrl:(NSURL*) imageURL {
-    // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
     CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
-
-    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
-    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+    NSDictionary* metadata = [RNImageTools imageMetadataFromICGImageSourceRef :imageSource];
     CFRelease(imageSource);
-
-    NSDictionary *imageMetadata;
-    if (imageProperties) {
-        imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
-    }
-    CFRelease(imageProperties);
-    return imageMetadata;
+    
+    return metadata;
 }
 
 + (NSDictionary*) imageMetadataFromImageData:(NSData*) imageData {
     CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, NULL);
-
-    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
-    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+    NSDictionary* metadata = [RNImageTools imageMetadataFromICGImageSourceRef :imageSource];
     CFRelease(imageSource);
 
+    return metadata;
+}
+
++ (NSDictionary*) imageMetadataFromICGImageSourceRef:(CGImageSourceRef) imageSource {
+    // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+    
     NSDictionary *imageMetadata;
     if (imageProperties) {
         imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
