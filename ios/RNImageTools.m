@@ -5,6 +5,7 @@
 #import <Photos/Photos.h>
 #import <AdobeCreativeSDKCore/AdobeCreativeSDKCore.h>
 #import "AdobeCreativeSDKImage/AdobeCreativeSDKImage.h"
+#import "NSDictionary+Merge.h"
 
 @interface RNImageTools () <AdobeUXImageEditorViewControllerDelegate>
 
@@ -45,22 +46,46 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
 }
 
 + (NSDictionary*) imageMetadata:(NSURL*) imageURL {
-    NSDictionary *imageMetadata;
     if([[imageURL scheme] hasPrefix:@"assets-library"]) {
-        NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
-        imageMetadata = [asset objectForKey:@"metadata"];
+        return [RNImageTools imageMetadataFromAsset: imageURL];
     } else {
-        // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
-        CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
-        NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
-        CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
-        CFRelease(imageSource);
-        if (imageProperties) {
-            imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
-        }
-        CFRelease(imageProperties);
+        return [RNImageTools imageMetadataFromImageUrl: imageURL];
     }
-    
+}
+
++ (NSDictionary*) imageMetadataFromAsset:(NSURL*) imageURL {
+    NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
+    return [asset objectForKey:@"metadata"];
+}
+
++ (NSDictionary*) imageMetadataFromImageUrl:(NSURL*) imageURL {
+    // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
+    CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
+
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+    CFRelease(imageSource);
+
+    NSDictionary *imageMetadata;
+    if (imageProperties) {
+        imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
+    }
+    CFRelease(imageProperties);
+    return imageMetadata;
+}
+
++ (NSDictionary*) imageMetadataFromImageData:(NSData*) imageData {
+    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, NULL);
+
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
+    CFRelease(imageSource);
+
+    NSDictionary *imageMetadata;
+    if (imageProperties) {
+        imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
+    }
+    CFRelease(imageProperties);
     return imageMetadata;
 }
 
@@ -163,14 +188,10 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         }
         
         if(options[@"preserveMetadata"]) {
-            CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
-            self.originalImageMetaData =  [(NSDictionary *) CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL)) mutableCopy];
-            CFRelease(imageSource);
+            self.originalImageMetaData =  [RNImageTools imageMetadata: imageURL];
         }
         
-        UIImage *image = [UIImage imageWithData:imageData];
-        
-        [self sendToEditor:image];
+        [self sendToEditor:[UIImage imageWithData:imageData]];
     }
 }
 
@@ -270,9 +291,16 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
 - (void) saveImage:(UIImage *) image {
     
     NSData* imageData = [self processImage:image];
+
+    NSDictionary* merged = nil;
+    if(self.originalImageMetaData) {
+        NSDictionary* metadataFromEditedImage = [RNImageTools imageMetadataFromImageData: imageData];
+        merged = [metadataFromEditedImage dictionaryByMergingWith: self.originalImageMetaData];
+    }
     
     if([self.saveTo isEqualToString:@"photos"]) {
-        [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:self.originalImageMetaData completionBlock:^(NSURL* url, NSError* error) {
+
+        [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:merged completionBlock:^(NSURL* url, NSError* error) {
             if (error == nil) {
                 //path isn't really applicable here (this is an asset uri), but left it in for backward comparability
                 self.resolve([url absoluteString]);
@@ -283,8 +311,8 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
     } else {
         NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
         
-        if(self.originalImageMetaData) {
-            imageData = [self addImageMetatData:imageData metadata:self.originalImageMetaData];
+        if(merged) {
+            imageData = [self addImageMetatData:imageData metadata:merged];
         }
         
         [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:imageData attributes:nil];

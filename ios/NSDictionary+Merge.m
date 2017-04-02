@@ -9,12 +9,10 @@
     
     [dict2 enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
         if (![dict1 objectForKey:key]) {
-            if ([obj isKindOfClass:[NSDictionary class]]) {
-                NSDictionary * newVal = [[dict1 objectForKey: key] dictionaryByMergingWith: (NSDictionary *) obj];
-                [result setObject: newVal forKey: key];
-            } else {
-                [result setObject: obj forKey: key];
-            }
+            [result setObject: obj forKey: key];
+        } else if ([obj isKindOfClass:[NSDictionary class]]) {
+            NSDictionary * newVal = [[dict1 objectForKey: key] dictionaryByMergingWith: (NSDictionary *) obj];
+            [result setObject: newVal forKey: key];
         }
     }];
     
