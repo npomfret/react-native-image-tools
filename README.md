@@ -13,12 +13,19 @@ _RNImageTools.openEditor(options)_ returns a promise which when resolved contain
 
 | name | description | default value | type |
 | :---: | :---: | :---: | :--- |
-| imageUri | the input image | n/a | `string`, supported formats include _path_ (e.g. `/foo/bar/image.jpeg`), _file url_ (e.g. `file:///foo/bar/image.jpeg`), _url_ (e.g. `http://foo.com/bar/image.jpeg`, _asset-uri_ (iOS ony, e.g. `assets-library://asset/asset.JPG?id=foo&EXT=JPG`), _content-uri_ (android only`content://media/external/images/foo/bar/JPEG`) |
-| outputFormat | the image type, must correspond to the input image type (generating PNG from JPEG or vider-vesa is not supported) | JPEG | `string`, either _'JPEG'_ or _'PNG'_ |
-| quality | representing the JPEG compression % (Ignored for PNG) | 80 | `integer`, a value between _0_ and _100_ |
-| preserveMetadata | copies image metadata (exif tags) from the input image to the output image | true | `boolean` |
-| saveTo | determines where the output image will be saved (`temp` writes to the application temp folder, `photos` writes to the default image store on the device | photos | `string`, _'photos'_ or _'temp'_ |
+| imageUri | the input image | n/a | `string` (see below)|
+| outputFormat | the image type, must correspond to the input image type (generating PNG from JPEG or vider-vesa is not supported) | JPEG | `string` (either _'JPEG'_ or _'PNG')_ |
+| quality | representing the JPEG compression % (Ignored for PNG) | 80 | `integer` (a value between _0_ and _100_) |
+| preserveMetadata (iOS only) | copies image metadata (exif tags) from the input image to the output image | true | `boolean` |
+| saveTo | determines where the output image will be saved | photos | `string` (_'photos'_ or _'file'_) |
 
+Supported `imageUri` formats include:
+ * _path_ e.g. `/foo/bar/image.jpeg`
+ * _file url_ e.g. `file:///foo/bar/image.jpeg`
+ * _url_ e.g. `http://foo.com/bar/image.jpeg`
+ * _asset-uri_ (iOS only) e.g. `assets-library://asset/asset.JPG?id=foo&EXT=JPG`
+ * _content-uri_ (android only) e.g. `content://media/external/images/foo/bar/JPEG`
+ 
 ```javascript
     import RNImageTools from "react-native-image-tools";
 

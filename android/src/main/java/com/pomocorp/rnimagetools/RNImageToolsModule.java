@@ -3,7 +3,6 @@ package com.pomocorp.rnimagetools;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -16,23 +15,10 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
-import com.facebook.react.bridge.WritableMap;
-
-import org.apache.commons.imaging.ImageReadException;
-import org.apache.commons.imaging.ImageWriteException;
-import org.apache.commons.imaging.Imaging;
-import org.apache.commons.imaging.common.ImageMetadata;
-import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
-import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
-import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
@@ -150,23 +136,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 saveTo = options.getString("saveTo");
             }
 
-            boolean preserveMetadata = true;
-            if (options.hasKey("preserveMetadata"))
-                preserveMetadata = options.getBoolean("preserveMetadata");
-
-            TiffOutputSet originalImageMetaData = null;
-            if (preserveMetadata && format.equals(Bitmap.CompressFormat.JPEG)) {
-                try {
-                    String realFilePath = contentResolver.resolveUri(imageUri);//looks like: file:/some-path/blah
-                    File file = new File(Uri.parse(realFilePath).getPath());
-                    JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(file);
-                    originalImageMetaData = jpegImageMetadata.getExif().getOutputSet();
-                } catch (Exception e) {
-                    Log.w(TAG, "failed to read image metadata", e);
-                }
-            }
-
-            editorListener.add(promise, originalImageMetaData);
+            editorListener.add(promise);
 
             AdobeImageIntent.Builder builder = new AdobeImageIntent.Builder(reactContext)
                     .setData(imageUri)
@@ -272,53 +242,14 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     private class EditorListener extends SelectImageListener {
-        private TiffOutputSet originalImageMetadata;
 
         public EditorListener(int code) {
             super(code);
         }
 
         @Override
-        void resolve(String editorOutputPath) {
-            if (this.originalImageMetadata != null) {
-                try {
-                    //todo: deal with width, height and orientation metadata as they may not be correct after being edited
-                    ImageMetadataTools imageMetadataAfter = ImageMetadataTools.createImageMetadata(contentResolver.readBytes(editorOutputPath));
-                    WritableMap metadataAfter = imageMetadataAfter.asMap();
-
-                    File editorOutputFile = new File(contentResolver.resolveUri(Uri.parse(editorOutputPath)));
-                    final File outputFileWithMetadata = new File(editorOutputFile.getParentFile(), UUID.randomUUID() + "_" + editorOutputFile.getName());
-
-                    FileOutputStream output = new FileOutputStream(outputFileWithMetadata);
-                    try {
-                        new ExifRewriter()
-                                .updateExifMetadataLossy(editorOutputFile, output, originalImageMetadata);
-                    } finally {
-                        output.close();
-                    }
-
-                    MediaScannerConnection.scanFile(reactContext, new String[]{outputFileWithMetadata.getAbsolutePath()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                        @Override
-                        public void onScanCompleted(String path, Uri uri) {
-                            EditorListener.super.resolve(outputFileWithMetadata.getAbsolutePath());
-                        }
-                    });
-                } catch (ImageReadException | IOException | ImageWriteException e) {
-                    Log.e("RNImageTools", "failed to copy original image metadata", e);
-                }
-            }
-
-            super.resolve(editorOutputPath);
-        }
-
-        @Override
         protected Uri uriFrom(Intent data) {
             return data.getParcelableExtra(AdobeImageIntent.EXTRA_OUTPUT_URI);
-        }
-
-        public void add(Promise promise, TiffOutputSet originalImageMetadata) {
-            this.originalImageMetadata = originalImageMetadata;
-            super.add(promise);
         }
     }
 
