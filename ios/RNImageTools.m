@@ -46,6 +46,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
         if (imageProperties) {
             imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
         }
+        CFRelease(imageProperties);
     }
     
     //hack!
