@@ -153,8 +153,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
 
 + (NSDictionary*) loadImageAsset:(NSURL*)assetURL {
-    __block UIImage *image = nil;
-    __block NSMutableData *metadata = nil;
+    __block NSDictionary *outputDict = nil;
     __block NSConditionLock * albumReadLock = [[NSConditionLock alloc] initWithCondition:WDASSETURL_PENDINGREADS];
     
     //this *MUST* execute on a background thread, ALAssetLibrary tries to use the main thread and will hang if you're on the main thread.
@@ -163,8 +162,24 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
         [assetLibrary assetForURL:assetURL
                       resultBlock:^(ALAsset *asset) {
                           ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
-                          metadata = [defaultRepresentation metadata];
-                          image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
+
+                          NSMutableData *metadata = [defaultRepresentation metadata];
+                          UIImage *image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
+                          long size = [defaultRepresentation size];
+                          CGSize dimensions = [defaultRepresentation dimensions];
+                          ALAssetOrientation orientation = [defaultRepresentation orientation];
+                          NSString *filename = [defaultRepresentation filename];
+                          outputDict = @{
+                                         @"image": image,
+                                         @"filename": filename,
+                                         @"metadata": metadata,
+                                         @"size": @(size),
+                                         @"orientation": @(orientation),
+                                         @"dimensions": @{
+                                                 @"width": @(dimensions.width),
+                                                 @"height": @(dimensions.height)
+                                                 }
+                                         };
                           
                           // notifies the lock that "all tasks are finished"
                           [albumReadLock lock];
@@ -182,7 +197,7 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
     [albumReadLock lockWhenCondition:WDASSETURL_ALLFINISHED];
     [albumReadLock unlock];
     
-    return @{@"image": image, @"metadata": metadata};
+    return outputDict;
 }
 
 - (void) sendToEditor:(UIImage*)image {
