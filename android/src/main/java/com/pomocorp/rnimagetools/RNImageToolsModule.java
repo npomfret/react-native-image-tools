@@ -2,28 +2,41 @@ package com.pomocorp.rnimagetools;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
+import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.common.ReactConstants;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
+import static android.provider.MediaStore.Images.*;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.ADJUST;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLEMISH;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLUR;
@@ -183,11 +196,87 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private abstract class SelectImageListener extends BaseActivityEventListener {
-        private final List<Promise> callbacks = new ArrayList<>();
+    @NonNull
+    private WritableNativeMap imageData(Uri uri) {
+        WritableNativeMap response = new WritableNativeMap();
+
+        String[] projection = {
+                Media._ID,
+                Media.MIME_TYPE,
+                Media.BUCKET_DISPLAY_NAME,
+                Media.SIZE,
+                Media.ORIENTATION,
+                Media.DISPLAY_NAME,
+                Media.DATE_TAKEN,
+                Media.TITLE,
+                Media.WIDTH,
+                Media.HEIGHT,
+                Media.LONGITUDE,
+                Media.LATITUDE
+        };
+
+        android.content.ContentResolver resolver = reactContext.getContentResolver();
+        Cursor cursor = resolver.query(uri, projection, null, null, null);
+
+        try {
+            if (cursor != null && cursor.getCount() == 1) {
+                cursor.moveToFirst();
+                String mimeType = cursor.getString(cursor.getColumnIndex(Media.MIME_TYPE));
+                response.putString("mimeType", mimeType);
+
+                response.putInt("size", cursor.getInt(cursor.getColumnIndex(Media.SIZE)));
+                response.putInt("orientation", cursor.getInt(cursor.getColumnIndex(Media.ORIENTATION)));
+                response.putString("filename", cursor.getString(cursor.getColumnIndex(Media.DISPLAY_NAME)));
+
+                long timestamp = cursor.getLong(cursor.getColumnIndex(Media.DATE_TAKEN));
+                response.putString("timestamp", formatDate(timestamp));
+
+                {
+                    int width = cursor.getInt(cursor.getColumnIndex(Media.WIDTH));
+                    int height = cursor.getInt(cursor.getColumnIndex(Media.HEIGHT));
+
+                    if (width <= 0 || height <= 0) {
+                        try {
+                            AssetFileDescriptor photoDescriptor = resolver.openAssetFileDescriptor(uri, "r");
+                            BitmapFactory.Options options = new BitmapFactory.Options();
+                            options.inJustDecodeBounds = true;
+                            BitmapFactory.decodeFileDescriptor(photoDescriptor.getFileDescriptor(), null, options);
+                            photoDescriptor.close();
+
+                            width = options.outWidth;
+                            height = options.outHeight;
+                        } catch (IOException e) {
+                            FLog.e(TAG, "Could not get dimensions for " + uri.toString(), e);
+                        }
+                    }
+
+                    WritableNativeMap map = new WritableNativeMap();
+                    map.putDouble("width", width);
+                    map.putDouble("height", height);
+                    response.putMap("dimensions", map);
+                }
+
+                double longitude = cursor.getDouble(cursor.getColumnIndex(Media.LONGITUDE));
+                double latitude = cursor.getDouble(cursor.getColumnIndex(Media.LATITUDE));
+                if (longitude > 0 || latitude > 0) {
+                    WritableNativeMap map = new WritableNativeMap();
+                    map.putDouble("longitude", longitude);
+                    map.putDouble("latitude", latitude);
+                    response.putMap("location", map);
+                }
+            }
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+        return response;
+    }
+
+    private abstract class BaseListener extends BaseActivityEventListener {
+        Promise callback;
         private final int requestCode;
 
-        public SelectImageListener(int requestCode) {
+        public BaseListener(int requestCode) {
             this.requestCode = requestCode;
         }
 
@@ -208,7 +297,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 Uri uri = uriFrom(data);
 
                 if (uri != null) {
-                    resolve(uri.toString());
+                    resolve(uri);
                 } else {
                     reject("no output uri");
                 }
@@ -217,26 +306,27 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             }
         }
 
-        void resolve(String realPathFromURI) {
-            while (!callbacks.isEmpty()) {
-                callbacks.remove(0).resolve(realPathFromURI);
+        void resolve(Uri uri) {
+            String realPathFromURI = uri.toString();
+            if(callback != null) {
+                callback.resolve(realPathFromURI);
             }
         }
 
         void reject(String reason) {
-            while (!callbacks.isEmpty()) {
-                callbacks.remove(0).reject("error", reason);
+            if(callback != null) {
+                callback.reject("error", reason);
             }
         }
 
         protected abstract Uri uriFrom(Intent data);
 
         public void add(Promise promise) {
-            callbacks.add(promise);
+            this.callback = promise;
         }
     }
 
-    private class GalleryListener extends SelectImageListener {
+    private class GalleryListener extends BaseListener {
         public GalleryListener(int code) {
             super(code);
         }
@@ -245,9 +335,20 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         protected Uri uriFrom(Intent data) {
             return data.getData();
         }
+
+        @Override
+        void resolve(Uri uri) {
+            WritableNativeMap response = imageData(uri);
+            response.putString("uri", uri.toString());
+
+            if(callback != null) {
+                callback.resolve(response);
+            }
+        }
+
     }
 
-    private class EditorListener extends SelectImageListener {
+    private class EditorListener extends BaseListener {
 
         public EditorListener(int code) {
             super(code);
@@ -259,4 +360,9 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
         }
     }
 
+    private static String formatDate(long timestamp) {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.getDefault());
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return df.format(new Date(timestamp));
+    }
 }

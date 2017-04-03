@@ -6,6 +6,7 @@
 #import <AdobeCreativeSDKCore/AdobeCreativeSDKCore.h>
 #import "AdobeCreativeSDKImage/AdobeCreativeSDKImage.h"
 #import "NSDictionary+Merge.h"
+#import <MobileCoreServices/MobileCoreServices.h>
 
 @interface RNImageTools () <AdobeUXImageEditorViewControllerDelegate>
 
@@ -35,7 +36,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
     NSDictionary *imageMetadata = [RNImageTools imageMetadata: imageURL];
-
+    
     //hack!
     // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
     NSMutableDictionary* copy = [imageMetadata mutableCopy];
@@ -70,7 +71,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
     CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, NULL);
     NSDictionary* metadata = [RNImageTools imageMetadataFromICGImageSourceRef :imageSource];
     CFRelease(imageSource);
-
+    
     return metadata;
 }
 
@@ -207,18 +208,49 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
                       resultBlock:^(ALAsset *asset) {
                           ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
                           
+                          NSString *mimeType = nil;
+                          if([[asset valueForProperty:ALAssetPropertyType] isEqual:ALAssetTypePhoto]) {
+                              NSString *uti = [defaultRepresentation UTI];
+                              //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
+                              if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
+                                  mimeType = @"image/png";
+                              } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
+                                  mimeType = @"image/jpeg";
+                              } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+                                  mimeType = @"image/gif";
+                              } else {
+                                  //todo... maybe try the filename?
+                              }
+                          }
+                          
                           NSMutableData *metadata = [defaultRepresentation metadata];
                           UIImage *image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
                           long size = [defaultRepresentation size];
                           CGSize dimensions = [defaultRepresentation dimensions];
                           ALAssetOrientation orientation = [defaultRepresentation orientation];
                           NSString *filename = [defaultRepresentation filename];
+                          
+                          CLLocation *loc = [asset valueForProperty:ALAssetPropertyLocation];
+                          NSDate *date = [asset valueForProperty:ALAssetPropertyDate];
+                          NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
+                          NSString * timestamp = [dateFormatter stringFromDate:date];
+                          
                           outputDict = @{
+                                         @"uri": [assetURL absoluteString],
                                          @"image": image,
+                                         @"mimeType": mimeType,
                                          @"filename": filename,
                                          @"metadata": metadata,
                                          @"size": @(size),
                                          @"orientation": @(orientation),
+                                         @"timestamp": timestamp,
+                                         @"location": loc ? @{
+                                             @"latitude": @(loc.coordinate.latitude),
+                                             @"longitude": @(loc.coordinate.longitude),
+                                             @"altitude": @(loc.altitude),
+                                             @"heading": @(loc.course),
+                                             @"speed": @(loc.speed),
+                                             } : @{},
                                          @"dimensions": @{
                                                  @"width": @(dimensions.width),
                                                  @"height": @(dimensions.height)
@@ -279,17 +311,22 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
     NSURL* localUrl = (NSURL *)[info valueForKey:UIImagePickerControllerReferenceURL];
+    NSDictionary* asset = [RNImageTools loadImageAsset:localUrl];
     
+    NSMutableDictionary* copy = [asset mutableCopy];
+    [copy removeObjectForKey:@"metadata"];
+    [copy removeObjectForKey:@"image"];
+
     [picker dismissModalViewControllerAnimated:YES];
     
-    self.resolve([localUrl absoluteString]);
+    self.resolve(copy);
 }
 
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (void) saveImage:(UIImage *) image {
     
     NSData* imageData = [self processImage:image];
-
+    
     NSDictionary* merged = nil;
     if(self.originalImageMetaData) {
         NSDictionary* metadataFromEditedImage = [RNImageTools imageMetadataFromImageData: imageData];
@@ -297,7 +334,7 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
     }
     
     if([self.saveTo isEqualToString:@"photos"]) {
-
+        
         [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:merged completionBlock:^(NSURL* url, NSError* error) {
             if (error == nil) {
                 //path isn't really applicable here (this is an asset uri), but left it in for backward comparability
