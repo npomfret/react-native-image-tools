@@ -108,7 +108,8 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     UIImagePickerController *picker = [[UIImagePickerController alloc] init];
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
     picker.allowsEditing = NO;
-    
+    picker.mediaTypes = @[(NSString *)kUTTypeImage];//limit to images for now
+
     void (^showPickerViewController)() = ^void() {
         dispatch_async(dispatch_get_main_queue(), ^{
             UIViewController *root = [[[[UIApplication sharedApplication] delegate] window] rootViewController];

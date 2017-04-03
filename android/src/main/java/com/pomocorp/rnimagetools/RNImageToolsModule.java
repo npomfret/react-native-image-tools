@@ -115,7 +115,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void selectImage(ReadableMap options, Promise promise) {
         Intent galleryPickerIntent = new Intent();
-        galleryPickerIntent.setType("image/*");
+        galleryPickerIntent.setType("image/*");//limit to images for now
         galleryPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
 
         String title = options.hasKey("title") ? options.getString("title") : "choose image";//where does this appear?
