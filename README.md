@@ -6,10 +6,13 @@ An example app is [here](https://github.com/npomfret/rn-image-tools-example).
 
 <img src="docs/demo.gif" width="350">
 
-### API
+## API
 
+### _RNImageTools.openEditor(options)_
 
-_RNImageTools.openEditor(options)_ returns a promise which when resolved contains a uri to the output image, or null if editing was cancelled.
+Opens the Adobe Image Editor.  Returns a promise which when resolved contains a uri to the output image, or null if editing was cancelled.
+
+_options_ parameter:
 
 | name | description | default value | type |
 | :---: | :---: | :---: | :--- |
@@ -39,16 +42,50 @@ Supported `imageUri` formats include:
         preserveMetadata,
         saveTo
       });
-
-      console.log("edited uri", uri);
     } catch (e) {
       console.warn("error", e);
     }
 ```
 
+### _RNImageTools.openEditor(options)_
+
+_options_ parameter:
+
+| name | description | default value | type |
+| :---: | :---: | :---: | :--- |
+| title | optional title (android only) | n/a | `string` |
+
+```javascript
+    import RNImageTools from "react-native-image-tools";
+
+    ...    
+
+    try {
+      const uri = await RNImageTools.selectImage({title});
+    } catch (e) {
+      console.warn("error", e);
+    }
+```
+
+### _RNImageTools.imageMetadata(imageUri)_
+
+Returns a promise which when resolved returns object containing the image metadata.
+
+```javascript
+    import RNImageTools from "react-native-image-tools";
+
+    ...    
+
+    try {
+      const metadata = await RNImageTools.imageMetadata(imageUri);
+    } catch (e) {
+      console.warn("error", e);
+    }
+```
+
+Opens the native image picker.  Returns a promise which when resolved contains a uri to the selected image.
+
 ### todo
 
- * preserve image metadata on android (in progress)
- * merge metadata, rather than overwrite
  * customise the tool array https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m#L49
  * support more oof the underlying Adobe API...  
