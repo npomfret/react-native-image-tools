@@ -49,6 +49,8 @@ Supported `imageUri` formats include:
 
 ### _RNImageTools.selectImage(options)_
 
+Opens the native image picker dialog. Returns a promise which when resolved returns a uri to the chosen image or null if cancelled.
+
 _options_ parameter:
 
 | name | description | default value | type |
@@ -82,8 +84,6 @@ Returns a promise which when resolved returns object containing the image metada
       console.warn("error", e);
     }
 ```
-
-Opens the native image picker.  Returns a promise which when resolved contains a uri to the selected image.
 
 ### todo
 
