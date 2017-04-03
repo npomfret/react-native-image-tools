@@ -49,7 +49,7 @@ Supported `imageUri` formats include:
 
 ### _RNImageTools.selectImage(options)_
 
-Opens the native image picker dialog. Returns a promise which when resolved returns a uri to the chosen image or null if cancelled.
+Opens the native image picker dialog. Returns a promise which when resolved returns an object containing the uri to the chosen image as well as some other useful information, or null if cancelled.
 
 _options_ parameter:
 
