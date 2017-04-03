@@ -47,7 +47,7 @@ Supported `imageUri` formats include:
     }
 ```
 
-### _RNImageTools.openEditor(options)_
+### _RNImageTools.selectImage(options)_
 
 _options_ parameter:
 
