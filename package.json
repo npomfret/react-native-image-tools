@@ -20,27 +20,6 @@
         }
       },
       "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample"
-    ],
-    [
-      {
-        "raw": "react-native-image-tools@git+https://github.com/npomfret/react-native-image-tools.git",
-        "scope": null,
-        "escapedName": "react-native-image-tools",
-        "name": "react-native-image-tools",
-        "rawSpec": "git+https://github.com/npomfret/react-native-image-tools.git",
-        "spec": "git+https://github.com/npomfret/react-native-image-tools.git",
-        "type": "hosted",
-        "hosted": {
-          "type": "github",
-          "ssh": "git@github.com:npomfret/react-native-image-tools.git",
-          "sshUrl": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
-          "httpsUrl": "git+https://github.com/npomfret/react-native-image-tools.git",
-          "gitUrl": "git://github.com/npomfret/react-native-image-tools.git",
-          "shortcut": "github:npomfret/react-native-image-tools",
-          "directUrl": "https://raw.githubusercontent.com/npomfret/react-native-image-tools/master/package.json"
-        }
-      },
-      "/Users/nickpomfret/Documents/github/datr/app/pomochat"
     ]
   ],
   "_from": "git+https://github.com/npomfret/react-native-image-tools.git",
@@ -87,10 +66,6 @@
   "main": "index.js",
   "name": "react-native-image-tools",
   "optionalDependencies": {},
-  "peerDependencies": {
-    "react-native": "^0.41.2",
-    "react-native-windows": "0.41.0-rc.1"
-  },
   "readme": "\n# react-native-image-tools\n\n## Getting started\n\n`$ npm install react-native-image-tools --save`\n\n### Mostly automatic installation\n\n`$ react-native link react-native-image-tools`\n\n### Manual installation\n\n\n#### iOS\n\n1. In XCode, in the project navigator, right click `Libraries` ➜ `Add Files to [your project's name]`\n2. Go to `node_modules` ➜ `react-native-image-tools` and add `RNImageTools.xcodeproj`\n3. In XCode, in the project navigator, select your project. Add `libRNImageTools.a` to your project's `Build Phases` ➜ `Link Binary With Libraries`\n4. Run your project (`Cmd+R`)<\n\n#### Android\n\n1. Open up `android/app/src/main/java/[...]/MainActivity.java`\n  - Add `import com.reactlibrary.RNImageToolsPackage;` to the imports at the top of the file\n  - Add `new RNImageToolsPackage()` to the list returned by the `getPackages()` method\n2. Append the following lines to `android/settings.gradle`:\n  \t```\n  \tinclude ':react-native-image-tools'\n  \tproject(':react-native-image-tools').projectDir = new File(rootProject.projectDir, \t'../node_modules/react-native-image-tools/android')\n  \t```\n3. Insert the following lines inside the dependencies block in `android/app/build.gradle`:\n  \t```\n      compile project(':react-native-image-tools')\n  \t```\n\n#### Windows\n[Read it! :D](https://github.com/ReactWindows/react-native)\n\n1. In Visual Studio add the `RNImageTools.sln` in `node_modules/react-native-image-tools/windows/RNImageTools.sln` folder to their solution, reference from their app.\n2. Open up your `MainPage.cs` app\n  - Add `using Com.Reactlibrary.RNImageTools;` to the usings at the top of the file\n  - Add `new RNImageToolsPackage()` to the `List<IReactPackage>` returned by the `Packages` method\n\n\n## Usage\n```javascript\nimport RNImageTools from 'react-native-image-tools';\n\n// TODO: What to do with the module?\nRNImageTools;\n```\n  ",
   "readmeFilename": "README.md",
   "scripts": {
