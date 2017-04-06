@@ -32,6 +32,10 @@
 }
 RCT_EXPORT_MODULE()
 
+- (NSArray<NSString *> *)supportedEvents {
+    return @[@"replicationChanged"];
+}
+
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
@@ -215,68 +219,104 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     }
 }
 
-//todo: request auth http://stackoverflow.com/questions/42555882/alassetslibrary-methods-deprecated
+RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [RNImageTools loadThumbnails:0];
+}
+
++ (void) loadThumbnails:(NSInteger*)from {
+    PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+    fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO]];
+
+    PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:fetchOptions];
+    
+    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+    requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+    requestOptions.networkAccessAllowed = YES;
+    
+    PHCachingImageManager *manager = [[PHCachingImageManager alloc] init];
+    
+    CGSize cellSize = CGSizeMake(100, 100);
+    dispatch_group_t requestGroup = dispatch_group_create();
+    
+    id foo = self;
+    
+    for (PHAsset *asset in fetchResult) {
+        [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
+            NSMutableDictionary *outputDict = [[RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info] mutableCopy];
+            [outputDict removeObjectForKey:@"image"];
+
+            //[foo sendEventWithName:@"replicationChanged" body:outputDict];
+        }];
+
+        break;
+    }
+}
 
 + (NSDictionary*) loadImageAsset:(NSURL*)assetURL {
     PHAsset *asset = [[PHAsset fetchAssetsWithALAssetURLs:@[assetURL] options:nil] lastObject];
     
+    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+    requestOptions.synchronous = YES;
+    
+    PHCachingImageManager *manager = [[PHCachingImageManager alloc] init];
+    
+    __block NSDictionary *outputDict;
+    [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
+        outputDict = [RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info];
+    }];
+    
+    return outputDict;
+}
+
++ (NSDictionary*) toDictionary:(PHAsset *)asset imageData:(NSData *)imageData uti:(NSString *)uti orientation:(UIImageOrientation) orientation info:(NSDictionary *)info {
     NSDate *creationDate = [asset creationDate];
     NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
     NSString *timestamp = [dateFormatter stringFromDate:creationDate];
     
     CLLocation *loc = [asset location];
     
-    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
-    requestOptions.synchronous = YES;
+    NSLog(@"requestImageDataForAsset returned info(%@)", info);
+    CGFloat size = (CGFloat)imageData.length;
+    UIImage *image = [UIImage imageWithData:imageData];
     
-    PHImageManager *manager = [PHImageManager defaultManager];
+    NSDictionary<NSString *,id> *metadata = [[CIImage imageWithData:imageData].properties mutableCopy];
     
-    __block NSDictionary *outputDict;
-    [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
-        NSLog(@"requestImageDataForAsset returned info(%@)", info);
-        CGFloat size = (CGFloat)imageData.length;
-        CIImage *image = [CIImage imageWithData:imageData];
-        NSDictionary<NSString *,id> *metadata = [image.properties mutableCopy];
-        
-        NSString *mimeType = nil;
-        //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
-        if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
-            mimeType = @"image/png";
-        } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
-            mimeType = @"image/jpeg";
-        } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-            mimeType = @"image/gif";
-        } else {
-            //todo... maybe try the filename?
-        }
-        
-        NSURL *path = [info objectForKey:@"PHImageFileURLKey"];
-        
-        outputDict = @{
-                       @"uri": [assetURL absoluteString],
-                       @"filename": [path absoluteString],
-                       @"image": image,
-                       @"mimeType": mimeType,
-                       @"metadata": metadata,
-                       @"size": @(size),
-                       @"orientation": @(orientation),
-                       @"timestamp": timestamp,
-                       @"location": loc ? @{
-                           @"latitude": @(loc.coordinate.latitude),
-                           @"longitude": @(loc.coordinate.longitude),
-                           @"altitude": @(loc.altitude),
-                           @"heading": @(loc.course),
-                           @"speed": @(loc.speed),
-                           } : @{},
-                       @"dimensions": @{
-                               @"width": @(asset.pixelWidth),
-                               @"height": @(asset.pixelHeight)
-                               }
-                       };
-        
-    }];
+    NSString *mimeType = nil;
+    //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
+    if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
+        mimeType = @"image/png";
+    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
+        mimeType = @"image/jpeg";
+    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+        mimeType = @"image/gif";
+    } else {
+        //todo... maybe try the filename?
+    }
     
-    return outputDict;
+    NSURL *path = [info objectForKey:@"PHImageFileURLKey"];
+    
+    return @{
+                   @"filename": [path absoluteString],
+                   @"image": image,
+                   @"mimeType": mimeType,
+                   @"metadata": metadata,
+                   @"size": @(size),
+                   @"orientation": @(orientation),
+                   @"timestamp": timestamp,
+                   @"location": loc ? @{
+                       @"latitude": @(loc.coordinate.latitude),
+                       @"longitude": @(loc.coordinate.longitude),
+                       @"altitude": @(loc.altitude),
+                       @"heading": @(loc.course),
+                       @"speed": @(loc.speed),
+                       } : @{},
+                   @"dimensions": @{
+                           @"width": @(asset.pixelWidth),
+                           @"height": @(asset.pixelHeight)
+                           }
+                   };
 }
 
 - (void) sendToEditor:(UIImage*)image {
@@ -319,6 +359,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     NSMutableDictionary* copy = [asset mutableCopy];
     [copy removeObjectForKey:@"metadata"];
     [copy removeObjectForKey:@"image"];
+    copy[@"uri"] = [localUrl absoluteString];
     
     [picker dismissModalViewControllerAnimated:YES];
     

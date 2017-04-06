@@ -1,14 +1,75 @@
 {
-  "name": "react-native-image-tools",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "_args": [
+    [
+      {
+        "raw": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "scope": null,
+        "escapedName": "react-native-image-tools",
+        "name": "react-native-image-tools",
+        "rawSpec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "spec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:npomfret/react-native-image-tools.git",
+          "sshUrl": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+          "httpsUrl": "git+https://github.com/npomfret/react-native-image-tools.git",
+          "gitUrl": "git://github.com/npomfret/react-native-image-tools.git",
+          "shortcut": "github:npomfret/react-native-image-tools",
+          "directUrl": "https://raw.githubusercontent.com/npomfret/react-native-image-tools/master/package.json"
+        }
+      },
+      "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample"
+    ]
+  ],
+  "_from": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+  "_id": "react-native-image-tools@1.0.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/react-native-image-tools",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+    "scope": null,
+    "escapedName": "react-native-image-tools",
+    "name": "react-native-image-tools",
+    "rawSpec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+    "spec": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+    "type": "hosted",
+    "hosted": {
+      "type": "github",
+      "ssh": "git@github.com:npomfret/react-native-image-tools.git",
+      "sshUrl": "git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+      "httpsUrl": "git+https://github.com/npomfret/react-native-image-tools.git",
+      "gitUrl": "git://github.com/npomfret/react-native-image-tools.git",
+      "shortcut": "github:npomfret/react-native-image-tools",
+      "directUrl": "https://raw.githubusercontent.com/npomfret/react-native-image-tools/master/package.json"
+    }
   },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git+ssh://git@github.com/npomfret/react-native-image-tools.git#e5efb4833e8693a31de0a22c183965b66d9a5e5f",
+  "_shasum": "057611cd7222eaaed479ef076f57a5a9c5251488",
+  "_shrinkwrap": null,
+  "_spec": "react-native-image-tools@git+ssh://git@github.com/npomfret/react-native-image-tools.git",
+  "_where": "/Users/nickpomfret/Documents/github/rn-image-tools-example/RNImageToolsExample",
+  "author": "",
+  "dependencies": {},
+  "description": "Install instructions [here](./docs/install.md).",
+  "devDependencies": {},
+  "gitHead": "e5efb4833e8693a31de0a22c183965b66d9a5e5f",
   "keywords": [
     "react-native"
   ],
-  "author": "",
-  "license": ""
+  "license": "",
+  "main": "index.js",
+  "name": "react-native-image-tools",
+  "optionalDependencies": {},
+  "readme": "# react-native-image-tools\n\nInstall instructions [here](./docs/install.md).\n\nAn example app is [here](https://github.com/npomfret/rn-image-tools-example).\n\n<img src=\"docs/demo.gif\" width=\"350\">\n\n## API\n\n### _RNImageTools.openEditor(options)_\n\nOpens the Adobe Image Editor.  Returns a promise which when resolved contains a uri to the output image, or null if editing was cancelled.\n\n_options_ parameter:\n\n| name | description | default value | type |\n| :---: | :---: | :---: | :--- |\n| imageUri | the input image | n/a | `string` (see below)|\n| outputFormat | the image type, must correspond to the input image type (generating PNG from JPEG or vider-vesa is not supported) | JPEG | `string` (either _'JPEG'_ or _'PNG')_ |\n| quality | representing the JPEG compression % (Ignored for PNG) | 80 | `integer` (a value between _0_ and _100_) |\n| preserveMetadata (iOS only) | copies image metadata (exif tags) from the input image to the output image | true | `boolean` |\n| saveTo | determines where the output image will be saved | photos | `string` (_'photos'_ or _'file'_) |\n\nSupported `imageUri` formats include:\n * _path_ e.g. `/foo/bar/image.jpeg`\n * _file url_ e.g. `file:///foo/bar/image.jpeg`\n * _url_ e.g. `http://foo.com/bar/image.jpeg`\n * _asset-uri_ (iOS only) e.g. `assets-library://asset/asset.JPG?id=foo&EXT=JPG`\n * _content-uri_ (android only) e.g. `content://media/external/images/foo/bar/JPEG`\n \n```javascript\n    import RNImageTools from \"react-native-image-tools\";\n\n    ...    \n\n    try {\n      const uri = await RNImageTools.openEditor({\n        imageUri,\n        outputFormat,\n        quality,\n        preserveMetadata,\n        saveTo\n      });\n    } catch (e) {\n      console.warn(\"error\", e);\n    }\n```\n\n### _RNImageTools.selectImage(options)_\n\nOpens the native image picker dialog. Returns a promise which when resolved returns an object containing the uri to the chosen image as well as some other useful information, or null if cancelled.\n\n_options_ parameter:\n\n| name | description | default value | type |\n| :---: | :---: | :---: | :--- |\n| title | optional title (android only) | n/a | `string` |\n\n```javascript\n    import RNImageTools from \"react-native-image-tools\";\n\n    ...    \n\n    try {\n      const uri = await RNImageTools.selectImage({title});\n    } catch (e) {\n      console.warn(\"error\", e);\n    }\n```\n\n### _RNImageTools.imageMetadata(imageUri)_\n\nReturns a promise which when resolved returns object containing the image metadata.\n\n```javascript\n    import RNImageTools from \"react-native-image-tools\";\n\n    ...    \n\n    try {\n      const metadata = await RNImageTools.imageMetadata(imageUri);\n    } catch (e) {\n      console.warn(\"error\", e);\n    }\n```\n\n### todo\n\n * customise the tool array https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m#L49\n * support more oof the underlying Adobe API...  ",
+  "readmeFilename": "README.md",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.0"
 }
