@@ -109,7 +109,7 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     picker.modalPresentationStyle = UIModalPresentationCurrentContext;
     picker.allowsEditing = NO;
     picker.mediaTypes = @[(NSString *)kUTTypeImage];//limit to images for now
-
+    
     void (^showPickerViewController)() = ^void() {
         dispatch_async(dispatch_get_main_queue(), ^{
             UIViewController *root = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
@@ -195,84 +195,66 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     }
 }
 
-// thanks to : http://www.codercowboy.com/code-synchronous-alassetlibrary-asset-existence-check/
-enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
+//todo: request auth http://stackoverflow.com/questions/42555882/alassetslibrary-methods-deprecated
 
 + (NSDictionary*) loadImageAsset:(NSURL*)assetURL {
-    __block NSDictionary *outputDict = nil;
-    __block NSConditionLock * albumReadLock = [[NSConditionLock alloc] initWithCondition:WDASSETURL_PENDINGREADS];
+    PHAsset *asset = [[PHAsset fetchAssetsWithALAssetURLs:@[assetURL] options:nil] lastObject];
     
-    //this *MUST* execute on a background thread, ALAssetLibrary tries to use the main thread and will hang if you're on the main thread.
-    dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        ALAssetsLibrary * assetLibrary = [[ALAssetsLibrary alloc] init];
-        [assetLibrary assetForURL:assetURL
-                      resultBlock:^(ALAsset *asset) {
-                          ALAssetRepresentation *defaultRepresentation = [asset defaultRepresentation];
-                          
-                          NSString *mimeType = nil;
-                          if([[asset valueForProperty:ALAssetPropertyType] isEqual:ALAssetTypePhoto]) {
-                              NSString *uti = [defaultRepresentation UTI];
-                              //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
-                              if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
-                                  mimeType = @"image/png";
-                              } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
-                                  mimeType = @"image/jpeg";
-                              } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-                                  mimeType = @"image/gif";
-                              } else {
-                                  //todo... maybe try the filename?
-                              }
-                          }
-                          
-                          NSMutableData *metadata = [defaultRepresentation metadata];
-                          UIImage *image = [UIImage imageWithCGImage:[defaultRepresentation fullResolutionImage]];
-                          long size = [defaultRepresentation size];
-                          CGSize dimensions = [defaultRepresentation dimensions];
-                          ALAssetOrientation orientation = [defaultRepresentation orientation];
-                          NSString *filename = [defaultRepresentation filename];
-                          
-                          CLLocation *loc = [asset valueForProperty:ALAssetPropertyLocation];
-                          NSDate *date = [asset valueForProperty:ALAssetPropertyDate];
-                          NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
-                          NSString * timestamp = [dateFormatter stringFromDate:date];
-                          
-                          outputDict = @{
-                                         @"uri": [assetURL absoluteString],
-                                         @"image": image,
-                                         @"mimeType": mimeType,
-                                         @"filename": filename,
-                                         @"metadata": metadata,
-                                         @"size": @(size),
-                                         @"orientation": @(orientation),
-                                         @"timestamp": timestamp,
-                                         @"location": loc ? @{
-                                             @"latitude": @(loc.coordinate.latitude),
-                                             @"longitude": @(loc.coordinate.longitude),
-                                             @"altitude": @(loc.altitude),
-                                             @"heading": @(loc.course),
-                                             @"speed": @(loc.speed),
-                                             } : @{},
-                                         @"dimensions": @{
-                                                 @"width": @(dimensions.width),
-                                                 @"height": @(dimensions.height)
-                                                 }
-                                         };
-                          
-                          // notifies the lock that "all tasks are finished"
-                          [albumReadLock lock];
-                          [albumReadLock unlockWithCondition:WDASSETURL_ALLFINISHED];
-                      } failureBlock:^(NSError *error) {
-                          // error handling
-                          NSLog(@"Error: %@ %@", error, [error userInfo]);
-                          // notifies the lock that "all tasks are finished"
-                          [albumReadLock lock];
-                          [albumReadLock unlockWithCondition:WDASSETURL_ALLFINISHED];
-                      }];
-    });
+    NSDate *creationDate = [asset creationDate];
+    NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
+    NSString *timestamp = [dateFormatter stringFromDate:creationDate];
     
-    // non-busy wait for the asset read to finish (specifically until the condition is "all finished")
-    [albumReadLock lockWhenCondition:WDASSETURL_ALLFINISHED];
-    [albumReadLock unlock];
+    CLLocation *loc = [asset location];
+    
+    PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+    requestOptions.synchronous = YES;
+    
+    PHImageManager *manager = [PHImageManager defaultManager];
+    
+    __block NSDictionary *outputDict;
+    [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
+        NSLog(@"requestImageDataForAsset returned info(%@)", info);
+        CGFloat size = (CGFloat)imageData.length;
+        CIImage *image = [CIImage imageWithData:imageData];
+        NSDictionary<NSString *,id> *metadata = [image.properties mutableCopy];
+        
+        NSString *mimeType = nil;
+        //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
+        if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
+            mimeType = @"image/png";
+        } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
+            mimeType = @"image/jpeg";
+        } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+            mimeType = @"image/gif";
+        } else {
+            //todo... maybe try the filename?
+        }
+        
+        NSURL *path = [info objectForKey:@"PHImageFileURLKey"];
+        
+        outputDict = @{
+                       @"uri": [assetURL absoluteString],
+                       @"filename": [path absoluteString],
+                       @"image": image,
+                       @"mimeType": mimeType,
+                       @"metadata": metadata,
+                       @"size": @(size),
+                       @"orientation": @(orientation),
+                       @"timestamp": timestamp,
+                       @"location": loc ? @{
+                           @"latitude": @(loc.coordinate.latitude),
+                           @"longitude": @(loc.coordinate.longitude),
+                           @"altitude": @(loc.altitude),
+                           @"heading": @(loc.course),
+                           @"speed": @(loc.speed),
+                           } : @{},
+                       @"dimensions": @{
+                               @"width": @(asset.pixelWidth),
+                               @"height": @(asset.pixelHeight)
+                               }
+                       };
+        
+    }];
     
     return outputDict;
 }
@@ -317,7 +299,7 @@ enum { WDASSETURL_PENDINGREADS = 1, WDASSETURL_ALLFINISHED = 0};
     NSMutableDictionary* copy = [asset mutableCopy];
     [copy removeObjectForKey:@"metadata"];
     [copy removeObjectForKey:@"image"];
-
+    
     [picker dismissModalViewControllerAnimated:YES];
     
     self.resolve(copy);
