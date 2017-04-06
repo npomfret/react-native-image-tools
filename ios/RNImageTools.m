@@ -30,10 +30,11 @@
 {
     return dispatch_get_main_queue();
 }
+
 RCT_EXPORT_MODULE()
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[@"replicationChanged"];
+    return @[@"photoLibraryImage"];
 }
 
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
@@ -41,13 +42,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
     
     NSDictionary *imageMetadata = [RNImageTools imageMetadata: imageURL];
     
-    //hack!
-    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
-    NSMutableDictionary* copy = [imageMetadata mutableCopy];
-    [copy removeObjectForKey:@"{MakerApple}"];
-    //end hack
-    
-    return resolve(copy);
+    return resolve(imageMetadata);
 }
 
 + (NSDictionary*) imageMetadata:(NSURL*) imageURL {
@@ -222,10 +217,10 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
 RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [RNImageTools loadThumbnails:0];
+    [self loadThumbnails:0 count:10];
 }
 
-+ (void) loadThumbnails:(NSInteger*)from {
+- (void) loadThumbnails:(NSInteger*)from count:(NSInteger*) count {
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO]];
 
@@ -234,23 +229,43 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
     requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
     requestOptions.networkAccessAllowed = YES;
+    requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
     
     PHCachingImageManager *manager = [[PHCachingImageManager alloc] init];
     
     CGSize cellSize = CGSizeMake(100, 100);
     dispatch_group_t requestGroup = dispatch_group_create();
     
-    id foo = self;
+    [self sendEventWithName:@"photoLibraryImage" body:@{}];
+    
+    int index = 0;
+    int max = 10;
     
     for (PHAsset *asset in fetchResult) {
+        if(index < from) {
+            continue;
+        }
+        
+        if(index >= max) {
+            return;
+        }
+        
+        index++;
         [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
             NSMutableDictionary *outputDict = [[RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info] mutableCopy];
             [outputDict removeObjectForKey:@"image"];
 
-            //[foo sendEventWithName:@"replicationChanged" body:outputDict];
+            CIImage* image = [CIImage imageWithData:imageData];
+            NSUInteger length = imageData.length;
+            
+            NSString *id = asset.localIdentifier;
+            NSRange range = [id rangeOfString:@"/"];
+            NSString *newString = [id substringToIndex:range.location];
+            NSString *assetUri = [NSString stringWithFormat:@"%@%@%@",@"assets-library://asset/asset.JPG?id=",newString,@"&ext=JPG"];
+            outputDict[@"uri"] = assetUri;
+            
+            [self sendEventWithName:@"photoLibraryImage" body:outputDict];
         }];
-
-        break;
     }
 }
 
@@ -281,7 +296,11 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     CGFloat size = (CGFloat)imageData.length;
     UIImage *image = [UIImage imageWithData:imageData];
     
-    NSDictionary<NSString *,id> *metadata = [[CIImage imageWithData:imageData].properties mutableCopy];
+    NSMutableDictionary<NSString *,id> *metadata = [[CIImage imageWithData:imageData].properties mutableCopy];
+    //hack!
+    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
+    [metadata removeObjectForKey:@"{MakerApple}"];//this one isn't, so lets just discard it
+    //end hack
     
     NSString *mimeType = nil;
     //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
