@@ -98,6 +98,26 @@ RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientS
     [AdobeUXAuthManager sharedManager].redirectURL = [NSURL URLWithString:redirectUri];
 }
 
+RCT_EXPORT_METHOD(checkImageLibraryPermission:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [self hasPermission:^(BOOL granted) {
+        resolve(@(granted));
+    }];
+}
+
+RCT_EXPORT_METHOD(requestImageLibraryPermission:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    [self requestPermission:^(BOOL granted) {
+        if(granted) {
+            resolve([NSNull null]);
+        } else {
+            reject(@"Error", @"Photo library permissions was not granted", nil);
+        }
+    }];
+}
+
 RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -122,7 +142,7 @@ RCT_EXPORT_METHOD(selectImage:(NSDictionary*)options
     
     picker.delegate = self;
     
-    [self checkPhotosPermissions:^(BOOL granted) {
+    [self hasPermission:^(BOOL granted) {
         if (!granted) {
             reject(@"Error", @"Photo library permissions not granted", nil);
             return;
@@ -384,25 +404,26 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     }
 }
 
-- (void)checkPhotosPermissions:(void(^)(BOOL granted))callback
+- (void)requestPermission:(void(^)(BOOL granted))callback
+{
+    [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+        if (status == PHAuthorizationStatusAuthorized) {
+            callback(YES);
+            return;
+        }
+        else {
+            callback(NO);
+            return;
+        }
+    }];
+}
+
+- (void)hasPermission:(void(^)(BOOL granted))callback
 {
     PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
     if (status == PHAuthorizationStatusAuthorized) {
         callback(YES);
-        return;
-    } else if (status == PHAuthorizationStatusNotDetermined) {
-        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
-            if (status == PHAuthorizationStatusAuthorized) {
-                callback(YES);
-                return;
-            }
-            else {
-                callback(NO);
-                return;
-            }
-        }];
-    }
-    else {
+    } else {
         callback(NO);
     }
 }
