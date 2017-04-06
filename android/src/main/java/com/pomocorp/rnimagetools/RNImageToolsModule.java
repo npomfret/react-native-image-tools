@@ -2,6 +2,7 @@ package com.pomocorp.rnimagetools;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,6 +18,7 @@ import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
 import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.BaseActivityEventListener;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -86,6 +88,18 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "RNImageTools";
+    }
+
+    @ReactMethod
+    public void checkImageLibraryPermission(Promise promise) {
+        //not required for android
+        promise.resolve(true);
+    }
+
+    @ReactMethod
+    public void requestImageLibraryPermission(Promise promise) {
+        //not required for android
+        promise.resolve(null);
     }
 
     @ReactMethod
