@@ -2,7 +2,6 @@ package com.pomocorp.rnimagetools;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -10,7 +9,6 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -18,14 +16,12 @@ import com.adobe.creativesdk.aviary.AdobeImageIntent;
 import com.adobe.creativesdk.aviary.internal.filters.ToolsFactory;
 import com.facebook.common.logging.FLog;
 import com.facebook.react.bridge.BaseActivityEventListener;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableNativeMap;
-import com.facebook.react.common.ReactConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +34,7 @@ import java.util.UUID;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static android.provider.MediaStore.Images.*;
+import static android.provider.MediaStore.Images.Media;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.ADJUST;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLEMISH;
 import static com.adobe.creativesdk.aviary.internal.filters.ToolsFactory.Tools.BLUR;
@@ -103,16 +99,41 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void imageMetadata(final String imageUri, final Promise promise) {
+    public void imageData(final String imageUri, final Promise promise) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     byte[] bytes = contentResolver.readBytes(imageUri);
 
-                    ImageMetadataTools imageMetadataTools = ImageMetadataTools.createImageMetadata(bytes);
+                    WritableNativeMap response = new WritableNativeMap();
+                    ImageMetadataTools imageMetadata = ImageMetadataTools.createImageMetadata(bytes);
+                    response.putString("uri", imageUri);
+                    response.putString("filename", imageUri.substring(imageUri.lastIndexOf('/') + 1));
+                    response.putMap("metadata", imageMetadata.asMap());
 
-                    promise.resolve(imageMetadataTools.asMap());
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+                    int imageHeight = options.outHeight;
+                    int imageWidth = options.outWidth;
+                    String imageType = options.outMimeType;
+
+                    response.putString("mimeType", imageType);
+
+                    response.putInt("size", bytes.length);
+                    response.putInt("orientation", imageMetadata.orientation());
+
+                    response.putString("timestamp", imageMetadata.timestamp());
+                    WritableNativeMap dimensions = new WritableNativeMap();
+                    dimensions.putDouble("width", imageWidth);
+                    dimensions.putDouble("height", imageHeight);
+                    response.putMap("dimensions", dimensions);
+
+                    response.putMap("location", imageMetadata.location());
+
+                    promise.resolve(response);
                 } catch (Exception e) {
                     Log.e(TAG, "failed to get metadata from  " + imageUri, e);
                     promise.reject("error", "metadata extract failed", e);
@@ -280,7 +301,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 }
             }
         } finally {
-            if(cursor != null)
+            if (cursor != null)
                 cursor.close();
         }
         return response;
@@ -322,13 +343,13 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
 
         void resolve(Uri uri) {
             String realPathFromURI = uri.toString();
-            if(callback != null) {
+            if (callback != null) {
                 callback.resolve(realPathFromURI);
             }
         }
 
         void reject(String reason) {
-            if(callback != null) {
+            if (callback != null) {
                 callback.reject("error", reason);
             }
         }
@@ -355,7 +376,7 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             WritableNativeMap response = imageData(uri);
             response.putString("uri", uri.toString());
 
-            if(callback != null) {
+            if (callback != null) {
                 callback.resolve(response);
             }
         }

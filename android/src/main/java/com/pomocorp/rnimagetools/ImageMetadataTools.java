@@ -8,7 +8,10 @@ import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.png.InterlaceMethod;
 import org.apache.commons.imaging.formats.tiff.TiffField;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
+import org.apache.commons.imaging.formats.tiff.constants.TiffTagConstants;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputField;
@@ -53,6 +56,27 @@ public class ImageMetadataTools {
             map.putMap(directory.description(), dir);
         }
 
+        return map;
+    }
+
+    public int orientation() {
+        TiffField exifValue = jpegImageMetadata.findEXIFValue(TiffTagConstants.TIFF_TAG_ORIENTATION);
+        Object value = exifValue.getValueDescription();
+        return value == null ? 0 : Integer.valueOf(value.toString());
+    }
+
+    public String timestamp() {
+        TiffField exifValue = jpegImageMetadata.findEXIFValue(TiffTagConstants.TIFF_TAG_DATE_TIME);
+        Object value = exifValue.getValueDescription();
+        return value == null ? null : value.toString();
+    }
+
+    public WritableMap location() throws ImageReadException {
+        TiffImageMetadata.GPSInfo gps = jpegImageMetadata.getExif().getGPS();
+
+        WritableNativeMap map = new WritableNativeMap();
+        map.putDouble("longitude", gps.getLongitudeAsDegreesEast());
+        map.putDouble("latitude", gps.getLatitudeAsDegreesNorth());
         return map;
     }
 }
