@@ -106,12 +106,6 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                 try {
                     byte[] bytes = contentResolver.readBytes(imageUri);
 
-                    WritableNativeMap response = new WritableNativeMap();
-                    ImageMetadataTools imageMetadata = ImageMetadataTools.createImageMetadata(bytes);
-                    response.putString("uri", imageUri);
-                    response.putString("filename", imageUri.substring(imageUri.lastIndexOf('/') + 1));
-                    response.putMap("metadata", imageMetadata.asMap());
-
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inJustDecodeBounds = true;
 
@@ -120,18 +114,24 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
                     int imageWidth = options.outWidth;
                     String imageType = options.outMimeType;
 
+                    WritableNativeMap response = new WritableNativeMap();
+                    response.putString("uri", imageUri);
+                    response.putString("filename", imageUri.substring(imageUri.lastIndexOf('/') + 1));
                     response.putString("mimeType", imageType);
-
                     response.putInt("size", bytes.length);
-                    response.putInt("orientation", imageMetadata.orientation());
 
-                    response.putString("timestamp", imageMetadata.timestamp());
                     WritableNativeMap dimensions = new WritableNativeMap();
                     dimensions.putDouble("width", imageWidth);
                     dimensions.putDouble("height", imageHeight);
                     response.putMap("dimensions", dimensions);
 
-                    response.putMap("location", imageMetadata.location());
+                    ImageMetadataTools imageMetadata = ImageMetadataTools.createImageMetadata(bytes);
+                    if(imageMetadata != null) {
+                        response.putMap("metadata", imageMetadata.asMap());
+                        response.putInt("orientation", imageMetadata.orientation());
+                        response.putString("timestamp", imageMetadata.timestamp());
+                        response.putMap("location", imageMetadata.location());
+                    }
 
                     promise.resolve(response);
                 } catch (Exception e) {

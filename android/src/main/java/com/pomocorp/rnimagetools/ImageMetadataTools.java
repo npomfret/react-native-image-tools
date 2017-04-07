@@ -1,5 +1,7 @@
 package com.pomocorp.rnimagetools;
 
+import android.support.annotation.Nullable;
+
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -7,6 +9,7 @@ import com.facebook.react.bridge.WritableNativeMap;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.png.InterlaceMethod;
 import org.apache.commons.imaging.formats.tiff.TiffField;
@@ -26,9 +29,18 @@ public class ImageMetadataTools {
         this.jpegImageMetadata = jpegImageMetadata;
     }
 
+    @Nullable
     public static ImageMetadataTools createImageMetadata(byte[] bytes) throws IOException, ImageReadException {
-        JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) Imaging.getMetadata(bytes);
-        return new ImageMetadataTools(jpegImageMetadata);
+        ImageMetadata metadata = Imaging.getMetadata(bytes);
+        if(metadata == null)
+            return null;
+
+        if (metadata instanceof JpegImageMetadata) {
+            JpegImageMetadata jpegImageMetadata = (JpegImageMetadata) metadata;
+            return new ImageMetadataTools(jpegImageMetadata);
+        } else {
+            return null;
+        }
     }
 
     public WritableMap asMap() throws ImageWriteException {
@@ -61,12 +73,17 @@ public class ImageMetadataTools {
 
     public int orientation() {
         TiffField exifValue = jpegImageMetadata.findEXIFValue(TiffTagConstants.TIFF_TAG_ORIENTATION);
+        if(exifValue == null)
+            return 0;
         Object value = exifValue.getValueDescription();
         return value == null ? 0 : Integer.valueOf(value.toString());
     }
 
+    @Nullable
     public String timestamp() {
         TiffField exifValue = jpegImageMetadata.findEXIFValue(TiffTagConstants.TIFF_TAG_DATE_TIME);
+        if(exifValue == null)
+            return null;
         Object value = exifValue.getValueDescription();
         return value == null ? null : value.toString();
     }
@@ -75,6 +92,9 @@ public class ImageMetadataTools {
         TiffImageMetadata.GPSInfo gps = jpegImageMetadata.getExif().getGPS();
 
         WritableNativeMap map = new WritableNativeMap();
+        if(gps == null)
+            return map;
+
         map.putDouble("longitude", gps.getLongitudeAsDegreesEast());
         map.putDouble("latitude", gps.getLatitudeAsDegreesNorth());
         return map;
