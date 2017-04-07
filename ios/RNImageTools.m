@@ -40,9 +40,17 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
-    NSMutableDictionary *imageMetadata = [[RNImageTools imageMetadata: imageURL] mutableCopy];
-    
+    NSDictionary *imageMetadata = [RNImageTools imageData: imageURL][@"metadata"];
+
     resolve(imageMetadata);
+}
+
+RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    NSURL *imageURL = [NSURL URLWithString:imageUri];
+    
+    NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
+    
+    resolve(imageData);
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
@@ -165,7 +173,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
         }
         
         if(options[@"preserveMetadata"]) {
-            self.originalImageMetaData =  [RNImageTools imageMetadata: imageURL];
+            self.originalImageMetaData =  [RNImageTools imageData: imageURL][@"metadata"];
         }
         
         [self sendToEditor:[UIImage imageWithData:imageData]];
@@ -178,14 +186,12 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     [self loadThumbnails:0 count:10];
 }
 
-+ (NSMutableDictionary*) imageMetadata:(NSURL*) imageURL {
-    NSMutableDictionary *data;
++ (NSMutableDictionary*) imageData:(NSURL*) imageURL {
     if([[imageURL scheme] hasPrefix:@"assets-library"]) {
-        data = [RNImageTools imageDataFromAssetUrl: imageURL];
+        return [RNImageTools imageDataFromAssetUrl: imageURL];
     } else {
-        data = [RNImageTools imageDataFromUrl: imageURL];
+        return [RNImageTools imageDataFromUrl: imageURL];
     }
-    return data[@"metadata"];
 }
 
 
@@ -382,6 +388,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     __block NSMutableDictionary *outputDict;
     [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
         outputDict = [RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info];
+        outputDict[@"uri"] = [assetURL absoluteString];
     }];
     
     return outputDict;
