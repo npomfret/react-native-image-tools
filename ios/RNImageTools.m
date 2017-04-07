@@ -60,7 +60,7 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
 
 + (NSDictionary*) imageMetadataFromImageUrl:(NSURL*) imageURL {
     CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
-    NSDictionary* metadata = [RNImageTools imageMetadataFromICGImageSourceRef :imageSource];
+    NSDictionary* metadata = [[RNImageTools imageMetadataFromICGImageSourceRef :imageSource] mutableCopy];
     CFRelease(imageSource);
     
     return metadata;
@@ -84,7 +84,8 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
         imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
     }
     CFRelease(imageProperties);
-    return imageMetadata;
+
+    return [RNImageTools jsonSafe:imageMetadata];
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
@@ -296,11 +297,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     CGFloat size = (CGFloat)imageData.length;
     UIImage *image = [UIImage imageWithData:imageData];
     
-    NSMutableDictionary<NSString *,id> *metadata = [[CIImage imageWithData:imageData].properties mutableCopy];
-    //hack!
-    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
-    [metadata removeObjectForKey:@"{MakerApple}"];//this one isn't, so lets just discard it
-    //end hack
+    NSDictionary<NSString *,id> *metadata = [CIImage imageWithData:imageData].properties;
     
     NSString *mimeType = nil;
     //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
@@ -320,7 +317,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
                    @"filename": [path absoluteString],
                    @"image": image,
                    @"mimeType": mimeType,
-                   @"metadata": metadata,
+                   @"metadata": [RNImageTools jsonSafe:metadata],
                    @"size": @(size),
                    @"orientation": @(orientation),
                    @"timestamp": timestamp,
@@ -486,6 +483,15 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     } else {
         callback(NO);
     }
+}
+
++ (NSDictionary*) jsonSafe:(NSDictionary*) metadata {
+    NSMutableDictionary *copy = [metadata mutableCopy];
+    //hack!
+    // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
+    [copy removeObjectForKey:@"{MakerApple}"];//this one isn't, so lets just discard it
+    //end hack
+    return copy;
 }
 
 @end
