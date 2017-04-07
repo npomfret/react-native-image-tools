@@ -40,52 +40,9 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
-    NSDictionary *imageMetadata = [RNImageTools imageMetadata: imageURL];
+    NSMutableDictionary *imageMetadata = [[RNImageTools imageMetadata: imageURL] mutableCopy];
     
-    return resolve(imageMetadata);
-}
-
-+ (NSDictionary*) imageMetadata:(NSURL*) imageURL {
-    if([[imageURL scheme] hasPrefix:@"assets-library"]) {
-        return [RNImageTools imageMetadataFromAsset: imageURL];
-    } else {
-        return [RNImageTools imageMetadataFromImageUrl: imageURL];
-    }
-}
-
-+ (NSDictionary*) imageMetadataFromAsset:(NSURL*) imageURL {
-    NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
-    return [asset objectForKey:@"metadata"];
-}
-
-+ (NSDictionary*) imageMetadataFromImageUrl:(NSURL*) imageURL {
-    CGImageSourceRef imageSource = CGImageSourceCreateWithURL((CFURLRef)imageURL, NULL);
-    NSDictionary* metadata = [[RNImageTools imageMetadataFromICGImageSourceRef :imageSource] mutableCopy];
-    CFRelease(imageSource);
-    
-    return metadata;
-}
-
-+ (NSDictionary*) imageMetadataFromImageData:(NSData*) imageData {
-    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, NULL);
-    NSDictionary* metadata = [RNImageTools imageMetadataFromICGImageSourceRef :imageSource];
-    CFRelease(imageSource);
-    
-    return metadata;
-}
-
-+ (NSDictionary*) imageMetadataFromICGImageSourceRef:(CGImageSourceRef) imageSource {
-    // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
-    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
-    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, ( CFDictionaryRef)options);
-    
-    NSDictionary *imageMetadata;
-    if (imageProperties) {
-        imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
-    }
-    CFRelease(imageProperties);
-
-    return [RNImageTools jsonSafe:imageMetadata];
+    resolve(imageMetadata);
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
@@ -185,7 +142,7 @@ RCT_EXPORT_METHOD(openEditor:(NSDictionary*)options
     
     if([uri hasPrefix:@"assets-library"]) {
         
-        NSDictionary* asset = [RNImageTools loadImageAsset :imageURL];
+        NSDictionary* asset = [RNImageTools imageDataFromAssetUrl :imageURL];
         UIImage *image = asset[@"image"];
         NSMutableData *metadata = asset[@"metadata"];
         
@@ -221,10 +178,154 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     [self loadThumbnails:0 count:10];
 }
 
++ (NSMutableDictionary*) imageMetadata:(NSURL*) imageURL {
+    NSMutableDictionary *data;
+    if([[imageURL scheme] hasPrefix:@"assets-library"]) {
+        data = [RNImageTools imageDataFromAssetUrl: imageURL];
+    } else {
+        data = [RNImageTools imageDataFromUrl: imageURL];
+    }
+    return data[@"metadata"];
+}
+
+
++ (NSMutableDictionary*) imageDataFromUrl:(NSURL*) imageURL {
+    NSDictionary *data = [NSData dataWithContentsOfURL: imageURL];
+    NSMutableDictionary* imageData = [RNImageTools imageDataFrom:data];
+    
+    imageData[@"uri"] = [imageURL absoluteString];
+    imageData[@"filename"] = imageURL.lastPathComponent;
+    
+    return imageData;
+}
+
++ (NSMutableDictionary*) imageDataFrom:(NSData*) image {
+    CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)image, NULL);
+    NSMutableDictionary* imageData = [RNImageTools imageDataFromICGImageSourceRef:imageSource];
+    CFRelease(imageSource);
+    
+    imageData[@"mimeType"] = [RNImageTools mimeTypeByGuessingFromData: image];
+    imageData[@"size"] = @([image length]);
+    
+    return imageData;
+}
+
++ (NSMutableDictionary*) imageDataFromICGImageSourceRef:(CGImageSourceRef) imageSource {
+    // thanks to: http://stackoverflow.com/questions/18265760/get-exif-data-in-mac-os-development
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool:NO], (NSString *)kCGImageSourceShouldCache, nil];
+    CFDictionaryRef imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, (CFDictionaryRef)options);
+    
+    NSDictionary *imageMetadata;
+    NSDictionary *dimensions;
+    NSNumber *orientation = nil;
+    NSDictionary *location;
+    NSString *timestamp;
+    
+    if (imageProperties) {
+        NSNumber *width = (NSNumber *)CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelWidth);
+        NSNumber *height = (NSNumber *)CFDictionaryGetValue(imageProperties, kCGImagePropertyPixelHeight);
+        dimensions = @{
+                       @"width": width,
+                       @"height": height
+                       };
+        
+        orientation = (NSNumber *)CFDictionaryGetValue(imageProperties, kCGImagePropertyOrientation);
+        
+        imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
+        
+        CFDictionaryRef gps = CFDictionaryGetValue(imageProperties, kCGImagePropertyGPSDictionary);
+        if (gps) {
+            //could use these for timestamp?
+            NSString *gpsTimeStamp = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSTimeStamp);
+            NSString *gpsDateStamp = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSDateStamp);
+            
+            double latitude = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLatitude) doubleValue];
+            NSString *latitudeRef = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLatitudeRef);
+            
+            double longitude = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLongitude) doubleValue];
+            NSString *longitudeRef = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLongitudeRef);
+            
+            double altitude = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSAltitude) doubleValue];
+            double speed = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSSpeed) doubleValue];
+            double heading = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSDestBearing) doubleValue];
+            
+            location = @{
+                         @"latitude": @([latitudeRef isEqualToString:@"S"] ? -latitude : latitude),
+                         @"longitude": @([longitudeRef isEqualToString:@"W"] ? -longitude : longitude),
+                         @"altitude": @(altitude),
+                         @"heading": @(heading),
+                         @"speed": @(speed),
+                         };
+        }
+        
+        CFDictionaryRef exifDic = CFDictionaryGetValue(imageProperties, kCGImagePropertyExifDictionary);
+        if (exifDic){
+            timestamp = (NSString *)CFDictionaryGetValue(exifDic, kCGImagePropertyExifDateTimeOriginal);
+        }
+        
+        CFRelease(imageProperties);
+    }
+    
+    return [NSMutableDictionary dictionaryWithDictionary:@{
+                                                           @"metadata": imageMetadata ? [RNImageTools jsonSafe:imageMetadata] : @{},
+                                                           @"orientation": orientation ? orientation : 0,
+                                                           @"timestamp": timestamp ? timestamp : @"",
+                                                           @"location": location ? location: @{},
+                                                           @"dimensions": dimensions ? dimensions : @{}
+                                                           }];
+}
+
++ (NSMutableDictionary*) toDictionary:(PHAsset *)asset imageData:(NSData *)imageData uti:(NSString *)uti orientation:(UIImageOrientation) orientation info:(NSDictionary *)info {
+    NSDate *creationDate = [asset creationDate];
+    NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
+    NSString *timestamp = [dateFormatter stringFromDate:creationDate];
+    
+    CLLocation *loc = [asset location];
+    
+    NSLog(@"requestImageDataForAsset returned info(%@)", info);
+    CGFloat size = (CGFloat)imageData.length;
+    UIImage *image = [UIImage imageWithData:imageData];
+    
+    CIImage *ciImage = [CIImage imageWithData:imageData];
+    NSDictionary<NSString *,id> *metadata = ciImage.properties;
+    
+    NSString *mimeType = nil;
+    //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
+    if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
+        mimeType = @"image/png";
+    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
+        mimeType = @"image/jpeg";
+    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
+        mimeType = @"image/gif";
+    } else {
+        //todo... maybe try the filename?
+    }
+    
+    return [NSMutableDictionary dictionaryWithDictionary:@{
+                                                           @"image": image,
+                                                           @"mimeType": mimeType,
+                                                           @"metadata": [RNImageTools jsonSafe:metadata],
+                                                           @"size": @(size),
+                                                           @"orientation": @(orientation),
+                                                           @"timestamp": timestamp,
+                                                           @"location": loc ? @{
+                                                               @"latitude": @(loc.coordinate.latitude),
+                                                               @"longitude": @(loc.coordinate.longitude),
+                                                               @"altitude": @(loc.altitude),
+                                                               @"heading": @(loc.course),
+                                                               @"speed": @(loc.speed),
+                                                               } : @{},
+                                                           @"dimensions": @{
+                                                                   @"width": @(asset.pixelWidth),
+                                                                   @"height": @(asset.pixelHeight)
+                                                                   }
+                                                           }];
+}
+
 - (void) loadThumbnails:(NSInteger*)from count:(NSInteger*) count {
     PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
     fetchOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:NO]];
-
+    
     PHFetchResult *fetchResult = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:fetchOptions];
     
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
@@ -255,7 +356,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
         [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
             NSMutableDictionary *outputDict = [[RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info] mutableCopy];
             [outputDict removeObjectForKey:@"image"];
-
+            
             CIImage* image = [CIImage imageWithData:imageData];
             NSUInteger length = imageData.length;
             
@@ -270,7 +371,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     }
 }
 
-+ (NSDictionary*) loadImageAsset:(NSURL*)assetURL {
++ (NSMutableDictionary*) imageDataFromAssetUrl:(NSURL*)assetURL {
     PHAsset *asset = [[PHAsset fetchAssetsWithALAssetURLs:@[assetURL] options:nil] lastObject];
     
     PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
@@ -278,61 +379,12 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     PHCachingImageManager *manager = [[PHCachingImageManager alloc] init];
     
-    __block NSDictionary *outputDict;
+    __block NSMutableDictionary *outputDict;
     [manager requestImageDataForAsset:asset options:requestOptions resultHandler:^(NSData *imageData, NSString *uti, UIImageOrientation orientation, NSDictionary *info) {
         outputDict = [RNImageTools toDictionary:asset imageData:imageData uti:uti orientation:orientation info:info];
     }];
     
     return outputDict;
-}
-
-+ (NSDictionary*) toDictionary:(PHAsset *)asset imageData:(NSData *)imageData uti:(NSString *)uti orientation:(UIImageOrientation) orientation info:(NSDictionary *)info {
-    NSDate *creationDate = [asset creationDate];
-    NSISO8601DateFormatter *dateFormatter = [[NSISO8601DateFormatter alloc] init];
-    NSString *timestamp = [dateFormatter stringFromDate:creationDate];
-    
-    CLLocation *loc = [asset location];
-    
-    NSLog(@"requestImageDataForAsset returned info(%@)", info);
-    CGFloat size = (CGFloat)imageData.length;
-    UIImage *image = [UIImage imageWithData:imageData];
-    
-    NSDictionary<NSString *,id> *metadata = [CIImage imageWithData:imageData].properties;
-    
-    NSString *mimeType = nil;
-    //see https://developer.apple.com/library/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
-    if([uti isEqualToString:(__bridge NSString *)kUTTypePNG]) {
-        mimeType = @"image/png";
-    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeJPEG]) {
-        mimeType = @"image/jpeg";
-    } else if ([uti isEqualToString:(__bridge NSString *)kUTTypeGIF]) {
-        mimeType = @"image/gif";
-    } else {
-        //todo... maybe try the filename?
-    }
-    
-    NSURL *path = [info objectForKey:@"PHImageFileURLKey"];
-    
-    return @{
-                   @"filename": [path absoluteString],
-                   @"image": image,
-                   @"mimeType": mimeType,
-                   @"metadata": [RNImageTools jsonSafe:metadata],
-                   @"size": @(size),
-                   @"orientation": @(orientation),
-                   @"timestamp": timestamp,
-                   @"location": loc ? @{
-                       @"latitude": @(loc.coordinate.latitude),
-                       @"longitude": @(loc.coordinate.longitude),
-                       @"altitude": @(loc.altitude),
-                       @"heading": @(loc.course),
-                       @"speed": @(loc.speed),
-                       } : @{},
-                   @"dimensions": @{
-                           @"width": @(asset.pixelWidth),
-                           @"height": @(asset.pixelHeight)
-                           }
-                   };
 }
 
 - (void) sendToEditor:(UIImage*)image {
@@ -370,7 +422,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
 {
     NSURL* localUrl = (NSURL *)[info valueForKey:UIImagePickerControllerReferenceURL];
-    NSDictionary* asset = [RNImageTools loadImageAsset:localUrl];
+    NSDictionary* asset = [RNImageTools imageDataFromAssetUrl:localUrl];
     
     NSMutableDictionary* copy = [asset mutableCopy];
     [copy removeObjectForKey:@"metadata"];
@@ -389,7 +441,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     NSDictionary* merged = nil;
     if(self.originalImageMetaData) {
-        NSDictionary* metadataFromEditedImage = [RNImageTools imageMetadataFromImageData: imageData];
+        NSDictionary* metadataFromEditedImage = [RNImageTools imageDataFromAssetUrl: imageData][@"metadata"];
         merged = [metadataFromEditedImage dictionaryByMergingWith: self.originalImageMetaData];
     }
     
@@ -485,13 +537,60 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     }
 }
 
-+ (NSDictionary*) jsonSafe:(NSDictionary*) metadata {
++ (NSMutableDictionary*) jsonSafe:(NSDictionary*) metadata {
     NSMutableDictionary *copy = [metadata mutableCopy];
     //hack!
     // todo : make sure all values in the dictionary (and all sub-dictionaries) are safe to return as JSON
     [copy removeObjectForKey:@"{MakerApple}"];//this one isn't, so lets just discard it
     //end hack
     return copy;
+}
+
++ (NSString *)mimeTypeByGuessingFromData:(NSData *)data {
+    //http://stackoverflow.com/questions/4147311/finding-image-type-from-nsdata-or-uiimage
+    
+    char bytes[12] = {0};
+    [data getBytes:&bytes length:12];
+    
+    const char bmp[2] = {'B', 'M'};
+    const char gif[3] = {'G', 'I', 'F'};
+    const char swf[3] = {'F', 'W', 'S'};
+    const char swc[3] = {'C', 'W', 'S'};
+    const char jpg[3] = {0xff, 0xd8, 0xff};
+    const char psd[4] = {'8', 'B', 'P', 'S'};
+    const char iff[4] = {'F', 'O', 'R', 'M'};
+    const char webp[4] = {'R', 'I', 'F', 'F'};
+    const char ico[4] = {0x00, 0x00, 0x01, 0x00};
+    const char tif_ii[4] = {'I','I', 0x2A, 0x00};
+    const char tif_mm[4] = {'M','M', 0x00, 0x2A};
+    const char png[8] = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    const char jp2[12] = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
+    
+    
+    if (!memcmp(bytes, bmp, 2)) {
+        return @"image/x-ms-bmp";
+    } else if (!memcmp(bytes, gif, 3)) {
+        return @"image/gif";
+    } else if (!memcmp(bytes, jpg, 3)) {
+        return @"image/jpeg";
+    } else if (!memcmp(bytes, psd, 4)) {
+        return @"image/psd";
+    } else if (!memcmp(bytes, iff, 4)) {
+        return @"image/iff";
+    } else if (!memcmp(bytes, webp, 4)) {
+        return @"image/webp";
+    } else if (!memcmp(bytes, ico, 4)) {
+        return @"image/vnd.microsoft.icon";
+    } else if (!memcmp(bytes, tif_ii, 4) || !memcmp(bytes, tif_mm, 4)) {
+        return @"image/tiff";
+    } else if (!memcmp(bytes, png, 8)) {
+        return @"image/png";
+    } else if (!memcmp(bytes, jp2, 12)) {
+        return @"image/jp2";
+    }
+    
+    return @"application/octet-stream"; // default type
+    
 }
 
 @end
