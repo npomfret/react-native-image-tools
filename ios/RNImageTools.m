@@ -49,6 +49,7 @@ RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
     NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
+    [imageData removeObjectForKey:@"image"];
     
     resolve(imageData);
 }
@@ -223,7 +224,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     NSDictionary *imageMetadata;
     NSDictionary *dimensions;
-    NSNumber *orientation = nil;
+    int orientation = 0;
     NSDictionary *location;
     NSString *timestamp;
     
@@ -235,15 +236,30 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
                        @"height": height
                        };
         
-        orientation = (NSNumber *)CFDictionaryGetValue(imageProperties, kCGImagePropertyOrientation);
+        orientation = [(NSNumber *)CFDictionaryGetValue(imageProperties, kCGImagePropertyOrientation) intValue];
         
         imageMetadata = [NSDictionary dictionaryWithDictionary:(__bridge NSDictionary*)(imageProperties)];
         
+        CFDictionaryRef exifDic = CFDictionaryGetValue(imageProperties, kCGImagePropertyExifDictionary);
+        if (exifDic){
+            timestamp = (NSString *)CFDictionaryGetValue(exifDic, kCGImagePropertyExifDateTimeOriginal);
+        }
+
         CFDictionaryRef gps = CFDictionaryGetValue(imageProperties, kCGImagePropertyGPSDictionary);
         if (gps) {
             //could use these for timestamp?
             NSString *gpsTimeStamp = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSTimeStamp);
             NSString *gpsDateStamp = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSDateStamp);
+            
+            if(!timestamp && gpsTimeStamp && gpsDateStamp) {
+                NSMutableString *date = [[NSMutableString alloc]init];
+                
+                [date appendString:gpsDateStamp];
+                [date appendString:@" "];
+                [date appendString:gpsTimeStamp];
+                
+                timestamp = date;
+            }
             
             double latitude = [(NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLatitude) doubleValue];
             NSString *latitudeRef = (NSString *)CFDictionaryGetValue(gps, kCGImagePropertyGPSLatitudeRef);
@@ -264,17 +280,12 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
                          };
         }
         
-        CFDictionaryRef exifDic = CFDictionaryGetValue(imageProperties, kCGImagePropertyExifDictionary);
-        if (exifDic){
-            timestamp = (NSString *)CFDictionaryGetValue(exifDic, kCGImagePropertyExifDateTimeOriginal);
-        }
-        
         CFRelease(imageProperties);
     }
     
     return [NSMutableDictionary dictionaryWithDictionary:@{
                                                            @"metadata": imageMetadata ? [RNImageTools jsonSafe:imageMetadata] : @{},
-                                                           @"orientation": orientation ? orientation : 0,
+                                                           @"orientation": @(orientation),
                                                            @"timestamp": timestamp ? timestamp : @"",
                                                            @"location": location ? location: @{},
                                                            @"dimensions": dimensions ? dimensions : @{}
