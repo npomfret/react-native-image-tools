@@ -47,11 +47,16 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
 
 RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
+        [imageData removeObjectForKey:@"image"];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            resolve(imageData);
+        });
+    });
     
-    NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
-    [imageData removeObjectForKey:@"image"];
-    
-    resolve(imageData);
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
