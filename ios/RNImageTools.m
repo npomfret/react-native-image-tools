@@ -50,11 +50,15 @@ RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
-        [imageData removeObjectForKey:@"image"];
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            resolve(imageData);
-        });
+        if(imageData) {
+            [imageData removeObjectForKey:@"image"];
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                resolve(imageData);
+            });
+        } else {
+            reject(@"Error", @"unable to get image data", nil);
+        }
     });
     
 }
@@ -202,7 +206,13 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
 
 
 + (NSMutableDictionary*) imageDataFromUrl:(NSURL*) imageURL {
-    NSDictionary *data = [NSData dataWithContentsOfURL: imageURL];
+    NSError *error;
+    NSDictionary *data = [NSData dataWithContentsOfURL: imageURL options:nil error:&error];
+    if(error) {
+        NSLog(@"unable to download image from %@: %@", imageURL, error.description);
+        return nil;
+    }
+    
     NSMutableDictionary* imageData = [RNImageTools imageDataFrom:data];
     
     imageData[@"uri"] = [imageURL absoluteString];
