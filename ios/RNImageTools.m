@@ -206,6 +206,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
 
 
 + (NSMutableDictionary*) imageDataFromUrl:(NSURL*) imageURL {
+    //todo: maybe use Rn imageLoader loadImageWithURLRequest to load the image
     NSError *error;
     NSDictionary *data = [NSData dataWithContentsOfURL: imageURL options:nil error:&error];
     if(error) {
@@ -470,17 +471,21 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
 // see: https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m
 - (void) saveImage:(UIImage *) image {
     
-    NSData* imageData = [self processImage:image];
+    NSData* data;
+    if ([self.outputFormat isEqualToString:@"PNG"]) {
+        data = UIImagePNGRepresentation(image);
+    } else {//assume its a jpeg, nothing else is supported
+        data = UIImageJPEGRepresentation(image, [self.quality floatValue] / 100.0f);
+    }
     
-    NSDictionary* merged = nil;
+    NSDictionary* metadata = [RNImageTools imageDataFrom: data][@"metadata"];
     if(self.originalImageMetaData) {
-        NSDictionary* metadataFromEditedImage = [RNImageTools imageDataFromAssetUrl: imageData][@"metadata"];
-        merged = [metadataFromEditedImage dictionaryByMergingWith: self.originalImageMetaData];
+        metadata = [metadata dictionaryByMergingWith: self.originalImageMetaData];
     }
     
     if([self.saveTo isEqualToString:@"photos"]) {
         
-        [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:imageData metadata:merged completionBlock:^(NSURL* url, NSError* error) {
+        [[[ALAssetsLibrary alloc] init] writeImageDataToSavedPhotosAlbum:data metadata:metadata completionBlock:^(NSURL* url, NSError* error) {
             if (error == nil) {
                 //path isn't really applicable here (this is an asset uri), but left it in for backward comparability
                 self.resolve([url absoluteString]);
@@ -491,11 +496,11 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     } else {
         NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [[NSUUID UUID] UUIDString], self.outputFormat]];
         
-        if(merged) {
-            imageData = [self addImageMetatData:imageData metadata:merged];
+        if(self.originalImageMetaData) {
+            data = [self addImageMetatData:data metadata:metadata];
         }
         
-        [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:imageData attributes:nil];
+        [[NSFileManager defaultManager] createFileAtPath:tmpFile contents:data attributes:nil];
         self.resolve([[NSURL fileURLWithPath:tmpFile] absoluteString]);
     }
 }
@@ -526,24 +531,6 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     CFRelease(destination);
     
     return outputData;
-}
-
-- (NSData*)processImage:(UIImage*)image
-{
-    if ([self.outputFormat isEqualToString:@"PNG"]) {
-        return UIImagePNGRepresentation(image);
-    } else {//assume its a jpeg, nothing else is supported
-        return UIImageJPEGRepresentation(image, [self.quality floatValue] / 100.0f);
-    }
-}
-
-- (NSData*)imageData:(NSURL*)imageUrl
-{
-    if ([self.outputFormat isEqualToString:@"PNG"]) {
-        return [NSData dataWithData:UIImagePNGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]])];
-    } else {//assume its a jpeg, nothing else is supported
-        return [NSData dataWithData:UIImageJPEGRepresentation([UIImage imageWithData:[NSData dataWithContentsOfURL:imageUrl]], 1)];
-    }
 }
 
 - (void)requestPermission:(void(^)(BOOL granted))callback
