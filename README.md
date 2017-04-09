@@ -87,5 +87,6 @@ Returns a promise which when resolved returns object containing the image metada
 
 ### todo
 
+ * support file urls in imageData method
  * customise the tool array https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m#L49
  * support more oof the underlying Adobe API...  
