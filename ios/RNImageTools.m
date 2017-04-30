@@ -315,7 +315,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     CLLocation *loc = [asset location];
     
-    NSLog(@"requestImageDataForAsset returned info(%@)", info);
+    //NSLog(@"requestImageDataForAsset returned info(%@)", info);
     CGFloat size = (CGFloat)imageData.length;
     UIImage *image = [UIImage imageWithData:imageData];
     
