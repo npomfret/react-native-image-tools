@@ -28,7 +28,7 @@
 
 - (dispatch_queue_t)methodQueue
 {
-    return dispatch_get_main_queue();
+    return dispatch_queue_create("RNImageTools.queue", DISPATCH_QUEUE_SERIAL);
 }
 
 RCT_EXPORT_MODULE()
@@ -48,19 +48,16 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
 RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
 
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
-        if(imageData) {
-            [imageData removeObjectForKey:@"image"];
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                resolve(imageData);
-            });
-        } else {
-            reject(@"Error", @"unable to get image data", nil);
-        }
-    });
-    
+    NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
+    if(imageData) {
+        [imageData removeObjectForKey:@"image"];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            resolve(imageData);
+        });
+    } else {
+        reject(@"Error", @"unable to get image data", nil);
+    }
 }
 
 RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
@@ -210,7 +207,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     NSError *error;
     NSDictionary *data = [NSData dataWithContentsOfURL: imageURL options:nil error:&error];
     if(error) {
-        NSLog(@"unable to download image from %@: %@", imageURL, error.description);
+        RCTLogTrace(@"unable to download image from %@: %@", imageURL, error.description);
         return nil;
     }
     
@@ -315,7 +312,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     CLLocation *loc = [asset location];
     
-    //NSLog(@"requestImageDataForAsset returned info(%@)", info);
+    //RCTLogTrace(@"requestImageDataForAsset returned info(%@)", info);
     CGFloat size = (CGFloat)imageData.length;
     UIImage *image = [UIImage imageWithData:imageData];
     
@@ -516,7 +513,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     CGImageDestinationRef destination = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)outputData,CGImageSourceGetType(source),1,NULL);
     
     if(!destination) {
-        NSLog(@"Error: Could not create image destination");
+        RCTLogWarn(@"Error: Could not create image destination");
         return imageData;
     }
     
@@ -524,7 +521,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
     
     BOOL success = CGImageDestinationFinalize(destination);
     if(!success) {
-        NSLog(@"Error: Could not create data from image destination");
+        RCTLogWarn(@"Error: Could not create data from image destination");
         return imageData;
     }
     
