@@ -7,6 +7,7 @@
 #import "AdobeCreativeSDKImage/AdobeCreativeSDKImage.h"
 #import "NSDictionary+Merge.h"
 #import <MobileCoreServices/MobileCoreServices.h>
+#import "RCTLog.h"
 
 @interface RNImageTools () <AdobeUXImageEditorViewControllerDelegate>
 
@@ -41,17 +42,17 @@ RCT_EXPORT_METHOD(imageMetadata:(NSString*)imageUri resolver:(RCTPromiseResolveB
     NSURL *imageURL = [NSURL URLWithString:imageUri];
     
     NSDictionary *imageMetadata = [RNImageTools imageData: imageURL][@"metadata"];
-
+    
     resolve(imageMetadata);
 }
 
 RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     NSURL *imageURL = [NSURL URLWithString:imageUri];
-
+    
     NSMutableDictionary *imageData = [RNImageTools imageData: imageURL];
     if(imageData) {
         [imageData removeObjectForKey:@"image"];
-
+        
         dispatch_async(dispatch_get_main_queue(), ^{
             resolve(imageData);
         });
@@ -257,7 +258,7 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
         if (exifDic){
             timestamp = (NSString *)CFDictionaryGetValue(exifDic, kCGImagePropertyExifDateTimeOriginal);
         }
-
+        
         CFDictionaryRef gps = CFDictionaryGetValue(imageProperties, kCGImagePropertyGPSDictionary);
         if (gps) {
             //could use these for timestamp?
