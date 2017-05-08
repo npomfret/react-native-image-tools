@@ -38,10 +38,10 @@ allprojects {
 
 dependencies {
     compile fileTree(dir: "libs", include: ["*.jar"])
-    compile 'com.adobe.creativesdk.foundation:auth:0.9.1251'
-    compile 'com.adobe.creativesdk:image:4.8.4'
-    compile 'com.localytics.android:library:3.8.0'
+    provided 'com.adobe.creativesdk.foundation:auth:0.9.1251'
+    provided 'com.adobe.creativesdk:image:4.8.4'
+    provided 'com.localytics.android:library:3.8.0'
 
-    compile 'com.facebook.react:react-native:+'
+    provided 'com.facebook.react:react-native:+'
 }
   
