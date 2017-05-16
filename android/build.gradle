@@ -38,10 +38,14 @@ allprojects {
 
 dependencies {
     compile fileTree(dir: "libs", include: ["*.jar"])
+
+    compile 'commons-io:commons-io:2.4'
+
+    //https://github.com/CreativeSDK/android-getting-started-samples/blob/master/image-editor-ui/code/app/build.gradle
     compile 'com.adobe.creativesdk.foundation:auth:0.9.1251'
     compile 'com.adobe.creativesdk:image:4.8.4'
     compile 'com.localytics.android:library:3.8.0'
 
-    provided 'com.facebook.react:react-native:+'
+    compile 'com.facebook.react:react-native:+'
 }
   
