@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.adobe.creativesdk.aviary.AdobeImageIntent;
@@ -341,10 +342,14 @@ public class RNImageToolsModule extends ReactContextBaseJavaModule {
             }
         }
 
-        void resolve(Uri uri) {
-            String realPathFromURI = uri.toString();
-            if (callback != null) {
-                callback.resolve(realPathFromURI);
+        void resolve(@Nullable Uri uri) {
+            if(uri == null) {
+                callback.resolve(null);
+            } else {
+                String realPathFromURI = uri.toString();
+                if (callback != null) {
+                    callback.resolve(realPathFromURI);
+                }
             }
         }
 
