@@ -1,4 +1,6 @@
-# react-native-image-tools
+**Unfortunately Adobe has discontinued development and support of the Image Editor UI this project is discontinued.**
+
+# ~~react-native-image-tools~~
 
 Install instructions [here](./docs/install.md).
 
