@@ -16,7 +16,6 @@ public class RNImageToolsPackage implements ReactPackage {
         return Arrays.<NativeModule>asList(new RNImageToolsModule(reactContext));
     }
 
-    @Override
     public List<Class<? extends JavaScriptModule>> createJSModules() {
         return Collections.emptyList();
     }
