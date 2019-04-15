@@ -1,0 +1,105 @@
+﻿Adobe Creative SDK
+API and Developer Additional Terms of Use
+
+
+NOTE: This document is enclosed with the Creative SDK file package for your convenience, but your use of the Creative SDK is always governed by the most current version of these Terms and the following:
+
+Adobe General Terms of Use <http://www.adobe.com/go/terms> | Adobe Privacy Policy <http://www.adobe.com/go/privacy>
+
+Please visit the website at http://creativesdk.adobe.com to view the most current version of these Terms.
+
+
+See Section 8 below for definitions of certain capitalized words and phrases used throughout these Terms. Other capitalized words or phrases not defined in these Terms have the same meaning as given to them in the Adobe.com Terms of Use or Privacy Policy, as applicable.
+
+
+1. Licenses granted to you by Adobe.
+
+Subject to these Terms we grant you the following licenses:
+
+In the Creative SDK. A nonexclusive, nontransferable, revocable license to use and reproduce the Creative SDK and API Key for the internal development and testing of your Developer Application(s) that integrate the API.
+
+In the API Key. A nonexclusive, nontransferable, revocable license to use, reproduce and distribute the API Key solely in and with your Developer Application(s).
+
+In the Creative Branding. A limited, nonexclusive, nontransferable, revocable license to use the badges and other branded assets available on the Developer website solely (i) in the case of Badges, to indicate and promote the compatibility of your Developer Application(s) with the Service; and (ii) in the case of Adobe Sign-in Buttons and Sign-in Template, for display on or in the user-interface (UI) of your Developer Application software to identify, initiate or facilitate the Service log-in mechanism; and (iii) in the case of Feature Icons, for display on or in the UI of your Developer Application software to identify discrete Service features, components or processing functions.
+
+
+2. Licenses granted by you to Adobe.
+
+You grant Adobe a nonexclusive, nontransferable license to use your name, logos or other marks and descriptive materials, and to publicly refer to you or your Developer Application to advertise and promote the Services and your Developer Application(s). This does not grant Adobe any ownership of your Developer Application(s) or marks.
+
+
+3. Developer Credentials, Requirements and Restrictions.
+
+Adobe ID. You must create an Adobe ID and online developer account profile with required Account Information in order to obtain an API Key. You must keep your account profile up-to-date with current Account information, including current contact information, at all times. We may deny your requests to access the Service or revoke your assigned API Key if we have reason to believe your Account Information has become outdated, or if we believe you are otherwise in violation of the letter or spirit of these Terms.
+
+Usage Limit. We may limit the number of calls accepted by the API if we believe that the number of calls may negatively impact the API or the Service.
+
+Creating software to function similar to the API. You may not sublicense an API for use by a third party, and you may not create a Developer Application that functions substantially the same as the API.
+
+End User Data. If you collect end-user personally identifiable information through your Developer Application(s), you agree you will: (i) comply with all applicable privacy laws and regulations, (ii) post a privacy notice that you make easily accessible to users from within your Developer Application(s) in which you clearly and accurately describe your practices for collecting, using, and sharing end user personally identifiable information with Adobe and third parties, and (iii) respect your end-users privacy and honor and adhere to your privacy notice commitments. If your privacy notice is used to comply with the EU Data Protection Directive, then it must adhere to the US Safe Harbor principles at http://www.export.gov/safeharbor/eu/eg_main_018475.asp.
+
+
+4. Security of your Developer Application.
+
+You acknowledge and agree that:
+
+Adobe may review your Developer Application(s) for compliance with these Terms and to identify security issues that could affect Adobe or its users.
+
+You will not take any action that exposes any part of the Service to any viruses, Trojan Horses, worms, time bombs, cancelbots or other malware intended to cause destruction or disruption.
+
+You will not merge, integrate, or use the Creative SDK, or any portion, with any software that is subject to license terms that require any Adobe intellectual property to be licensed to or otherwise shared with any third party (for example only, GPL license terms).
+
+
+5. Using the Creative Branding.
+
+You must use the Creative Branding only as permitted by these Terms and the licenses granted in Section 1 and must follow the Branding Guidelines when doing so:
+
+Using Badges: you may only use Badges to market and promote your Developer Application(s). You may not use the Badges on or in the UI of your Developer Application software;
+
+Use Adobe Sign-in Buttons and Sign-in Template: you may only use the required Adobe Sign-in Buttons and the Sign-in Template on or in the UI of your Developer Application software to identify, initiate or facilitate the Service log-in mechanism. You may not use Sign-in Buttons or the Sign-in Template within or outside the UI of your Developer Application software to identify discrete Service features, components or processing functions, or to market or promote your Developer Application(s); and
+
+Use Feature Icons: you may only use the required Feature Icons on or in the UI of your Developer Application software to identify discrete Service features, components or processing functions. You may not use Feature Icons within or outside the UI of your Developer Application software as the means to initiate the Service log-in mechanism, or to market or promote your Developer Application(s).
+
+
+6. Naming and describing your Developer Application.
+
+You may not use the Creative Cloud trademark, Creative Branding or names, or other Adobe product names or trademark names in the name of your Developer Application(s), or register a website domain, or trademark name that contains any of the foregoing.
+
+
+7. Fee for use of the Creative SDK.
+
+There is presently no added cost for use of the Creative SDK. However, we reserve the right, at any time, to set prices or charge a fee or additional Service fees, to you or to end-users of your Developer Applications, for use of the Creative SDK or any of its included discrete Service features, components or processing functions that may be integrated or enabled in, through or by your Developer Applications. We will make reasonable effort to provide prior notice of any such changes.
+
+
+8. Definitions.
+As used in these Terms:
+
+“Adobe ID” means the unique username and password and profile information you use to create a developer account and to log-in and access the Service.
+
+“Adobe Sign-in Buttons and Sign-in Template” means the distinctive button graphic, and separate sign-in screen interface template made available by Adobe and required for display in or on a user interface as the visual prompt to facilitate or initiate the Service log-in mechanism.
+
+“API” means the application programming interfaces, header, jar files that facilitate access to, and interoperate with, the Service.
+
+“API Key” means the API access credential assigned to your Adobe ID and used by Adobe to associate and authenticate your API activity and Developer Application(s).
+
+“Badges” means the Service name, “Creative Cloud Connected” and “Enabled” badges and any other badges, logos, or trademarks made available by Adobe for use to market and promote the availability and compatibility of your Developer Application(s) with the Service.
+
+“Branding Guidelines” means any instructions or guidelines that may be published or provided to you by Adobe in connection with your use of the Creative Branding.
+
+“Creative Branding” means the Badges, Adobe Sign-in Buttons and Sign-in Template, and Feature Icons.
+
+“Creative SDK” means the Creative Cloud software development kit and all associated materials, system files, tools, programs and utilities, plug-ins, API, content files, sample code and related documentation.
+
+“Developer Application(s)” means any software applications, programs and other technologies you develop with or using the Creative SDK and the API to access, function or interoperate with the Service.
+
+“Feature Icons” means the varied iconography made available by Adobe and required for display in or on a user interface to uniquely identify certain discrete Service features, components or processing functions.
+
+“Service” means the Adobe Creative Cloud service and developer platform service, the Creative SDK, API Keys, and all associated products, services and service content, documentation and guidelines.
+
+“Terms” means these API and Developer Additional Terms of Use, and all other related terms and policies, including those first mentioned above, which are incorporated in these Terms by this reference, that collectively govern your access to, use of, and development for the Service.
+
+
+
+Creative_SDK_API_and_Developer_Additional_Terms_of_Use-en_US-20140602_1513
+
+

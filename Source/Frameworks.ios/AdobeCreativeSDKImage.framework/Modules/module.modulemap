@@ -1,0 +1,6 @@
+framework module AdobeCreativeSDKImage {
+  umbrella header "AdobeCreativeSDKImage.h"
+
+  export *
+  module * { export * }
+}

@@ -29,6 +29,14 @@ to submit your app to Adobe for [review](https://creativesdk.zendesk.com/hc/en-u
 
 (official docs [here](https://creativesdk.adobe.com/docs/android/#/articles/gettingstarted/index.html))
 
+* Import Modules to `settings.gradle`:
+  ```
+  ...
+  include ':react-native-image-tools'
+  project(':react-native-image-tools').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-image-tools/android')
+  ...
+  ```
+
 * Add some maven repos to your root level `build.gradle`:
 
 ```
@@ -41,6 +49,7 @@ to submit your app to Adobe for [review](https://creativesdk.zendesk.com/hc/en-u
          maven {
              url 'http://maven.localytics.com/public'
          }
+         ...
      }
  }
 ```
@@ -56,13 +65,23 @@ android {
     multiDexEnabled true    
   }
 
-  dexOptions {
-    jumboMode true
-    javaMaxHeapSize "4g"
+  packagingOptions {
+    exclude 'META-INF/rxjava.properties'
   }
 
   dependencies {
-    compile 'com.android.support:multidex:1.0.1'
+    compile 'com.android.support:multidex:1.0.3'
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    configurations {
+        cleanedAnnotations
+        compile.exclude group: 'org.jetbrains' , module:'annotations'
+    }
+    configurations.all {
+        exclude group: 'com.android.support', module: 'support-v13'
+    }
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:design:${rootProject.ext.supportLibVersion}"
+    compile project(':react-native-image-tools')
     ...
   }
 }
@@ -73,6 +92,7 @@ android {
 ```
 
 ...
+import com.pomocorp.rnimagetools.RNImageToolsPackage;
 import com.adobe.creativesdk.foundation.AdobeCSDKFoundation;
 import com.adobe.creativesdk.foundation.auth.IAdobeAuthClientCredentials;
 ...
@@ -81,10 +101,18 @@ import com.adobe.creativesdk.foundation.auth.IAdobeAuthClientCredentials;
 public class MainApplication extends Application implements ReactApplication, IAdobeAuthClientCredentials  {
     ...
     
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          ...
+          new RNImageToolsPackage()
+          ...
+          );
+    }
+
     @Override
     public void onCreate() {
         ...
-        MultiDex.install(getBaseContext());
+        MultiDex.install(getBaseContext()); // oppotional, for some case this might cause an error
         AdobeCSDKFoundation.initializeCSDKFoundation(getApplicationContext());
         ...
     }
@@ -110,3 +138,5 @@ public class MainApplication extends Application implements ReactApplication, IA
     }
 }
 ```
+
+* Add both AsyncTaskCompat.java & AsyncTaskCompatHoneycomb.java to your android/app/src/main/java/com/yourproject/
