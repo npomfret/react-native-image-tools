@@ -61,7 +61,7 @@ RCT_EXPORT_METHOD(imageData:(NSString*)imageUri resolver:(RCTPromiseResolveBlock
     }
 }
 
-CT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
+RCT_EXPORT_METHOD(authorize:(NSString*)clientId clientSecret:(NSString*) clientSecret redirectUri:(NSString*) redirectUri) {
     [[AdobeUXAuthManager sharedManager] setAuthenticationParametersWithClientID:clientId
                                                                    clientSecret:clientSecret
                                                                    enableSignUp:NO];
