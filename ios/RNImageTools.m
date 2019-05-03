@@ -417,6 +417,30 @@ RCT_EXPORT_METHOD(loadThumbnails:(RCTPromiseResolveBlock)resolve
 
 - (void) sendToEditor:(UIImage*)image {
     
+    // Set the tools to Sticker, Frames, Enhance, and Crop (displayed in that order).
+    [AdobeImageEditorCustomization setToolOrder:@[
+        kAdobeImageEditorEnhance,        /* Enhance */
+        kAdobeImageEditorEffects,        /* Effects */
+        kAdobeImageEditorStickers,       /* Stickers */
+        kAdobeImageEditorOrientation,    /* Orientation */
+        kAdobeImageEditorCrop,           /* Crop */
+        kAdobeImageEditorColorAdjust,    /* Color */
+        kAdobeImageEditorLightingAdjust, /* Lighting */
+        kAdobeImageEditorSharpness,      /* Sharpness */
+        kAdobeImageEditorDraw,           /* Draw */
+        kAdobeImageEditorText,           /* Text */
+        kAdobeImageEditorRedeye,         /* Redeye */
+        kAdobeImageEditorWhiten,         /* Whiten */
+        kAdobeImageEditorBlemish,        /* Blemish */
+        kAdobeImageEditorBlur,           /* Blur */
+        kAdobeImageEditorMeme,           /* Meme */
+        kAdobeImageEditorFrames,         /* Frames */
+        kAdobeImageEditorFocus,          /* TiltShift */
+        kAdobeImageEditorSplash,         /* ColorSplash */
+        kAdobeImageEditorOverlay,        /* Overlay */
+        kAdobeImageEditorVignette        /* Vignette */
+    ]];
+    
     AdobeUXImageEditorViewController* editor = [[AdobeUXImageEditorViewController alloc] initWithImage:image];
     
     //todo: set the options
