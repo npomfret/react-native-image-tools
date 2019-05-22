@@ -87,9 +87,80 @@ Returns a promise which when resolved returns object containing the image metada
     }
 ```
 
-### todo
+### Customizing
+since i dont have much time to make the costumization work from js method. here some of configuration that u need to add / change in order to customize the image editor
 
- * add removeMetadata method
- * support file urls in imageData method
- * customise the tool array https://github.com/CreativeSDK/phonegap-plugin-csdk-image-editor/blob/master/src/ios/CDVImageEditor.m#L49
- * support more oof the underlying Adobe API...  
+Fork this project, then change some of file bellow
+
+```java
+// react-native-image-tools/android/src/main/java/com/pomocorp/rnimagetools/RNUmageToolsModule.java
+
+
+AdobeImageIntent.Builder builder = new AdobeImageIntent.Builder(reactContext)
+    .setData(imageUri)
+    .withToolList(new ToolsFactory.Tools[]{
+         // Just Comment or remove anything u dont need
+         CROP,
+         ORIENTATION,
+         ENHANCE,
+         TEXT,
+         DRAW,
+         MEME,
+         FOCUS,
+         VIGNETTE,
+         SHARPNESS,
+         BLUR,
+         COLOR,
+         EFFECTS,
+         ADJUST,
+         PERSPECTIVE,
+         REDEYE,
+         WHITEN,
+         BLEMISH,
+         SPLASH,
+         LIGHTING,
+         OVERLAYS,
+         FRAMES,
+         STICKERS,
+    })
+    ....
+```
+
+```
+//react-native-image-tools/ios/RNImageTools.xcodeproj/RNImageTools.m
+
+- (void) sendToEditor:(UIImage*)image {
+    // Just Comment or remove anything u dont need
+    [AdobeImageEditorCustomization setToolOrder:@[
+        kAdobeImageEditorEnhance,        /* Enhance */
+        kAdobeImageEditorEffects,        /* Effects */
+        kAdobeImageEditorStickers,       /* Stickers */
+        kAdobeImageEditorOrientation,    /* Orientation */
+        kAdobeImageEditorCrop,           /* Crop */
+        kAdobeImageEditorColorAdjust,    /* Color */
+        kAdobeImageEditorLightingAdjust, /* Lighting */
+        kAdobeImageEditorSharpness,      /* Sharpness */
+        kAdobeImageEditorDraw,           /* Draw */
+        kAdobeImageEditorText,           /* Text */
+        kAdobeImageEditorRedeye,         /* Redeye */
+        kAdobeImageEditorWhiten,         /* Whiten */
+        kAdobeImageEditorBlemish,        /* Blemish */
+        kAdobeImageEditorBlur,           /* Blur */
+        kAdobeImageEditorMeme,           /* Meme */
+        kAdobeImageEditorFrames,         /* Frames */
+        kAdobeImageEditorFocus,          /* TiltShift */
+        kAdobeImageEditorSplash,         /* ColorSplash */
+        kAdobeImageEditorOverlay,        /* Overlay */
+        kAdobeImageEditorVignette        /* Vignette */
+    ]];
+    ....
+}
+```
+
+```
+"dependencies": {
+    ....
+    "react-native-image-tools": "git+https://github.com/<your-git-username>/react-native-image-tools.git",
+    ....
+}
+```  

@@ -1,0 +1,3 @@
+   Name: CreativeSDKCore
+Version: 0.3.2160.1
+ Branch: origin/master-external/ac0c47f

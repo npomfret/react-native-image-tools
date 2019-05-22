@@ -1,0 +1,976 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="html/html; charset=utf-8" />
+		<title>AdobeUXAuthManager Class Reference</title>
+		<meta id="xcode-display" name="xcode-display" content="render"/>
+		<link rel="stylesheet" type="text/css" href="../css/styles.css" media="all" />
+		<link rel="stylesheet" type="text/css" media="print" href="../css/stylesPrint.css" />
+		<meta name="generator" content="appledoc 2.2 (build 963)" />
+	</head>
+	<body>
+		<header id="top_header">
+			<div id="library" class="hideInXcode">
+				<h1><a id="libraryTitle" href="../index.html">AdobeCreativeSDKCore.framework </a></h1>
+				<a id="developerHome" href="../index.html">Adobe Systems Incorporated</a>
+			</div>
+			
+			<div id="title" role="banner">
+				<h1 class="hideInXcode">AdobeUXAuthManager Class Reference</h1>
+			</div>
+			<ul id="headerButtons" role="toolbar">
+				<li id="toc_button">
+					<button aria-label="Show Table of Contents" role="checkbox" class="open" id="table_of_contents"><span class="disclosure"></span>Table of Contents</button>
+				</li>
+				<li id="jumpto_button" role="navigation">
+					<select id="jumpTo">
+	<option value="top">Jump To&#133;</option>
+	
+	<option value="overview">Overview</option>
+	
+	
+	
+	
+	<option value="tasks">Tasks</option>
+	
+	
+	
+	
+	
+	<option value="properties">Properties</option>
+	
+	<option value="//api/name/authDelegate">&nbsp;&nbsp;&nbsp;&nbsp;authDelegate</option>
+	
+	<option value="//api/name/authenticated">&nbsp;&nbsp;&nbsp;&nbsp;authenticated</option>
+	
+	<option value="//api/name/creativeCloudEventLoggingMode">&nbsp;&nbsp;&nbsp;&nbsp;creativeCloudEventLoggingMode</option>
+	
+	<option value="//api/name/userProfile">&nbsp;&nbsp;&nbsp;&nbsp;userProfile</option>
+	
+	
+	
+	
+	<option value="class_methods">Class Methods</option>
+	
+	<option value="//api/name/sharedManager">&nbsp;&nbsp;&nbsp;&nbsp;+ sharedManager</option>
+	
+	
+	
+	
+	<option value="instance_methods">Instance Methods</option>
+	
+	<option value="//api/name/login:onSuccess:onError:">&nbsp;&nbsp;&nbsp;&nbsp;- login:onSuccess:onError:</option>
+	
+	<option value="//api/name/logout:onError:">&nbsp;&nbsp;&nbsp;&nbsp;- logout:onError:</option>
+	
+	<option value="//api/name/openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:">&nbsp;&nbsp;&nbsp;&nbsp;- openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:</option>
+	
+	<option value="//api/name/setAuthenticationParametersWithClientID:clientSecret:enableSignUp:">&nbsp;&nbsp;&nbsp;&nbsp;- setAuthenticationParametersWithClientID:clientSecret:enableSignUp:</option>
+	
+	<option value="//api/name/setAuthenticationParametersWithClientID:withClientSecret:">&nbsp;&nbsp;&nbsp;&nbsp;- setAuthenticationParametersWithClientID:withClientSecret:</option>
+	
+	
+	
+</select>
+				</li>
+			</ul>
+		</header>
+		<nav id="tocContainer" class="isShowingTOC">
+			<ul id="toc" role="tree">
+				
+<li role="treeitem"><span class="nodisclosure"></span><span class="sectionName"><a href="#overview">Overview</a></span></li>
+
+
+
+
+<li role="treeitem" id="task_treeitem"><span class="nodisclosure"></span><span class="sectionName"><a href="#tasks">Tasks</a></span><ul>
+	
+</ul></li>
+
+
+
+
+
+<li role="treeitem" class="children"><span class="disclosure"></span><span class="sectionName"><a href="#properties">Properties</a></span><ul>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/authDelegate">authDelegate</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/authenticated">authenticated</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/creativeCloudEventLoggingMode">creativeCloudEventLoggingMode</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/userProfile">userProfile</a></span></li>
+	
+</ul></li>
+
+
+
+<li role="treeitem" class="children"><span class="disclosure"></span><span class="sectionName"><a href="#class_methods">Class Methods</a></span><ul>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/sharedManager">sharedManager</a></span></li>
+	
+</ul></li>
+
+
+
+<li role="treeitem" class="children"><span class="disclosure"></span><span class="sectionName"><a href="#instance_methods">Instance Methods</a></span><ul>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/login:onSuccess:onError:">login:onSuccess:onError:</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/logout:onError:">logout:onError:</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:">openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/setAuthenticationParametersWithClientID:clientSecret:enableSignUp:">setAuthenticationParametersWithClientID:clientSecret:enableSignUp:</a></span></li>
+	
+	<li><span class="nodisclosure"></span><span class="sectionName"><a href="#//api/name/setAuthenticationParametersWithClientID:withClientSecret:">setAuthenticationParametersWithClientID:withClientSecret:</a></span></li>
+	
+</ul></li>
+
+
+			</ul>
+		</nav>
+		<article>
+			<div id="contents" class="isShowingTOC" role="main">
+				<a title="AdobeUXAuthManager Class Reference" name="top"></a>
+				<div class="main-navigation navigation-top">
+					<ul>
+	<li><a href="../index.html">Index</a></li>
+	<li><a href="../hierarchy.html">Hierarchy</a></li>
+</ul>
+				</div>
+				<div id="header">
+					<div class="section-header">
+						<h1 class="title title-header">AdobeUXAuthManager Class Reference</h1>
+					</div>		
+				</div>
+				<div id="container">	
+					
+					<div class="section section-specification"><table cellspacing="0"><tbody>
+						<tr>
+	<td class="specification-title">Inherits from</td>
+	<td class="specification-value">NSObject</td>
+</tr><tr>
+	<td class="specification-title">Declared in</td>
+	<td class="specification-value">AdobeUXAuthManager.h</td>
+</tr>
+						</tbody></table></div>
+					
+                    
+                    
+					
+					<div class="section section-overview">
+						<a title="Overview" name="overview"></a>
+						<h2 class="subtitle subtitle-overview">Overview</h2>
+						<p>AdobeUXAuthManager is the class through which authentication with the Adobe Creative Cloud is managed.
+This is starting point for using the Creative SDK.  All clients are required to call
+the <a href="#//api/name/setAuthenticationParametersWithClientID:withClientSecret:">setAuthenticationParametersWithClientID:withClientSecret:</a> method before using the CreativeSDK.</p>
+
+<p>Using this class, you can:</p>
+
+<ol>
+<li>Specify the clientID and clientSecret as issued by Adobe.</li>
+<li>Query for authentication status.</li>
+<li>Get the user profile of the currently <a href="#//api/name/authenticated">authenticated</a> user.</li>
+<li>Logout the currently logged in user.</li>
+</ol>
+
+
+<p>You need to use the <a href="#//api/name/sharedManager">sharedManager</a> property for all the interactions.</p>
+
+<p>The Login and Logout notifications are sent through the NSNotificationManager class.</p>
+
+<p>The NSNotificationManager will send</p>
+
+<p><code>extern NSString* const AdobeAuthManagerLoggedInNotification</code></p>
+
+<p>when a user login occurs and</p>
+
+<p><code>extern NSString* const AdobeAuthManagerLoggedOutNotification</code></p>
+
+<p>when a user logout occurs.</p>
+
+<p>The AdobeUXAuthManager handles creating the UI for login and account creation automatically.
+Logins are cached such that when your application starts up, it can login automatically.</p>
+
+<p>The Creative SDK does not force login and logout completion block to run on the main thread.</p><div class="note"><p><strong>Note:</strong> Many Creative SDK APIs will require an <a href="#//api/name/authenticated">authenticated</a> user so nearly all other classes will rely upon this class.</p></div>
+					</div>
+					
+					
+					
+					
+					
+					<div class="section section-tasks">
+						<a title="Tasks" name="tasks"></a>
+						<h2 class="subtitle subtitle-tasks">Tasks</h2>
+						
+						
+						
+						
+
+						<ul class="task-list">
+							<li>
+	<span class="tooltip">
+		<code><a href="#//api/name/authenticated">&nbsp;&nbsp;authenticated</a></code>
+	</span>
+	<span class="task-item-suffix">property</span>
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/userProfile">&nbsp;&nbsp;userProfile</a></code>
+	</span>
+	<span class="task-item-suffix">property</span>
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/authDelegate">&nbsp;&nbsp;authDelegate</a></code>
+	</span>
+	<span class="task-item-suffix">property</span>
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/sharedManager">+&nbsp;sharedManager</a></code>
+	</span>
+	
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/setAuthenticationParametersWithClientID:withClientSecret:">&ndash;&nbsp;setAuthenticationParametersWithClientID:withClientSecret:</a></code>
+	</span>
+	
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/setAuthenticationParametersWithClientID:clientSecret:enableSignUp:">&ndash;&nbsp;setAuthenticationParametersWithClientID:clientSecret:enableSignUp:</a></code>
+	</span>
+	
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/creativeCloudEventLoggingMode">&nbsp;&nbsp;creativeCloudEventLoggingMode</a></code>
+	</span>
+	<span class="task-item-suffix">property</span>
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/login:onSuccess:onError:">&ndash;&nbsp;login:onSuccess:onError:</a></code>
+	</span>
+	
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/logout:onError:">&ndash;&nbsp;logout:onError:</a></code>
+	</span>
+	
+	
+</li><li>
+	<span class="tooltip">
+		<code><a href="#//api/name/openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:">&ndash;&nbsp;openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:</a></code>
+	</span>
+	
+	
+</li>
+						</ul>
+						
+					</div>
+					
+					
+					
+					
+					
+					<div class="section section-methods">
+						<a title="Properties" name="properties"></a>
+						<h2 class="subtitle subtitle-methods">Properties</h2>
+						
+						<div class="section-method">
+	<a name="//api/name/authDelegate" title="authDelegate"></a>
+	<h3 class="subsubtitle method-title">authDelegate</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>The authentication delegate allows control over the user interaction conditions reported by the authentication
+service.  For example, for email verification and terms of use update.  Notice that this is a weak reference.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>@property (nonatomic, weak) id&lt;AdobeUXAuthDelegate&gt; authDelegate</code></div>
+
+    
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>The authentication delegate allows control over the user interaction conditions reported by the authentication
+service.  For example, for email verification and terms of use update.  Notice that this is a weak reference.</p><div class="note"><p><strong>Note:</strong> <font color="red">This property is part of the restricted api.</font></p></div>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/authenticated" title="authenticated"></a>
+	<h3 class="subsubtitle method-title">authenticated</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Returns whether or not there is a currently logged in user.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>@property (nonatomic, readonly, assign, getter=isAuthenticated) BOOL authenticated</code></div>
+
+    
+	
+	
+	
+	<div class="method-subsection return">
+		<h4 class="method-subtitle parameter-title">Return Value</h4>
+		<p>YES if there is an authenticated user, NO if there is no currently logged in user.</p>
+	</div>
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Returns whether or not there is a currently logged in user.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/creativeCloudEventLoggingMode" title="creativeCloudEventLoggingMode"></a>
+	<h3 class="subsubtitle method-title">creativeCloudEventLoggingMode</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Controls if and how event data gets logged with the Creative Cloud.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>@property (nonatomic) AdobeCCEventLoggingMode creativeCloudEventLoggingMode</code></div>
+
+    
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Controls if and how event data gets logged with the Creative Cloud.</p>
+
+<p>Default value is AdobeCCEventLoggingModeDefault.</p>
+
+<p>Must set this before the call to setAuthenticationParametersWithClientID:&hellip;</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/userProfile" title="userProfile"></a>
+	<h3 class="subsubtitle method-title">userProfile</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Gets the user profile of the currently logged in user.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>@property (atomic, readonly, strong) AdobeAuthUserProfile *userProfile</code></div>
+
+    
+	
+	
+	
+	<div class="method-subsection return">
+		<h4 class="method-subtitle parameter-title">Return Value</h4>
+		<p>the user profile of the currently logged in user or nil if no user is currently logged in.</p>
+	</div>
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Gets the user profile of the currently logged in user.</p>
+	</div>
+	
+	
+	
+	
+	
+	<div class="method-subsection see-also-section">
+		<h4 class="method-subtitle">See Also</h4>
+		<ul>
+			
+			<li><code><p><a href="../Classes/AdobeAuthUserProfile.html">AdobeAuthUserProfile</a></p></code></li>
+			
+		</ul>
+	</div>
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+					</div>
+					
+					
+					
+					<div class="section section-methods">
+						<a title="Class Methods" name="class_methods"></a>
+						<h2 class="subtitle subtitle-methods">Class Methods</h2>
+						
+						<div class="section-method">
+	<a name="//api/name/sharedManager" title="sharedManager"></a>
+	<h3 class="subsubtitle method-title">sharedManager</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Returns a singleton instance of AdobeUXAuthManager for use within your application.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>+ (AdobeUXAuthManager *)sharedManager</code></div>
+
+    
+	
+	
+	
+	<div class="method-subsection return">
+		<h4 class="method-subtitle parameter-title">Return Value</h4>
+		<p>the singleton object.</p>
+	</div>
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Returns a singleton instance of AdobeUXAuthManager for use within your application.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+					</div>
+					
+					
+					
+					<div class="section section-methods">
+						<a title="Instance Methods" name="instance_methods"></a>
+						<h2 class="subtitle subtitle-methods">Instance Methods</h2>
+						
+						<div class="section-method">
+	<a name="//api/name/login:onSuccess:onError:" title="login:onSuccess:onError:"></a>
+	<h3 class="subsubtitle method-title">login:onSuccess:onError:</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Logs in the user. This method creates a view that handles all aspects of account login and account creation.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>- (void)login:(UIViewController *)<em>parentViewController</em> onSuccess:(void ( ^ ) ( AdobeAuthUserProfile *profile ))<em>successBlock</em> onError:(void ( ^ ) ( NSError *error ))<em>errorBlock</em></code></div>
+
+    
+	
+	<div class="method-subsection arguments-section parameters">
+		<h4 class="method-subtitle parameter-title">Parameters</h4>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>parentViewController</em></dt>
+			<dd><p>the view controller that will host any UI elements needed for login</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>successBlock</em></dt>
+			<dd><p>the block of code that gets called upon login success</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>errorBlock</em></dt>
+			<dd><p>the block of code that gets called upon login failure</p></dd>
+		</dl>
+		
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Logs in the user. This method creates a view that handles all aspects of account login and account creation.</p><div class="note"><p><strong>Note:</strong> This call is not explicity needed to be called. If authentication is required, it will be called later.</p></div>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/logout:onError:" title="logout:onError:"></a>
+	<h3 class="subsubtitle method-title">logout:onError:</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Logs out the currently logged in user.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>- (void)logout:(void ( ^ ) ( void ))<em>successBlock</em> onError:(void ( ^ ) ( NSError *error ))<em>errorBlock</em></code></div>
+
+    
+	
+	<div class="method-subsection arguments-section parameters">
+		<h4 class="method-subtitle parameter-title">Parameters</h4>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>successBlock</em></dt>
+			<dd><p>the block of code that gets called upon logout success</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>errorBlock</em></dt>
+			<dd><p>the block of code that gets called upon logout failure</p></dd>
+		</dl>
+		
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Logs out the currently logged in user.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:" title="openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:"></a>
+	<h3 class="subsubtitle method-title">openContinuableAuthenticationURLForError:parentViewController:animate:onSuccess:onError:</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Contact the authentication provider to open the user interaction page.  Typically this method is called when handling
+authentication events that require user interaction, e.g., email verification and terms of use updates.  The client app
+implements the detectedContinuableAuthenticationEvent delegate to receive the error information (@see <a href="../Protocols/AdobeUXAuthDelegate.html">AdobeUXAuthDelegate</a>).
+The delegate calls this method when the client is ready to display the view controller.  The code must be called on the
+main thread.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>- (void)openContinuableAuthenticationURLForError:(NSString *)<em>errorCode</em> parentViewController:(UIViewController *)<em>parentViewController</em> animate:(BOOL)<em>animate</em> onSuccess:(void ( ^ ) ( void ))<em>successBlock</em> onError:(void ( ^ ) ( NSError *error ))<em>errorBlock</em></code></div>
+
+    
+	
+	<div class="method-subsection arguments-section parameters">
+		<h4 class="method-subtitle parameter-title">Parameters</h4>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>errorCode</em></dt>
+			<dd><p>authentication user interaction error</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>parentViewController</em></dt>
+			<dd><p>view controller that will host the UI elements needed to open the user interaction URL</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>animate</em></dt>
+			<dd><p>YES to present/hide the sign up view with an aniamation</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>successBlock</em></dt>
+			<dd><p>block of code that gets called upon success</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>errorBlock</em></dt>
+			<dd><p>block of code that gets called upon failure</p></dd>
+		</dl>
+		
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Contact the authentication provider to open the user interaction page.  Typically this method is called when handling
+authentication events that require user interaction, e.g., email verification and terms of use updates.  The client app
+implements the detectedContinuableAuthenticationEvent delegate to receive the error information (@see <a href="../Protocols/AdobeUXAuthDelegate.html">AdobeUXAuthDelegate</a>).
+The delegate calls this method when the client is ready to display the view controller.  The code must be called on the
+main thread.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/setAuthenticationParametersWithClientID:clientSecret:enableSignUp:" title="setAuthenticationParametersWithClientID:clientSecret:enableSignUp:"></a>
+	<h3 class="subsubtitle method-title">setAuthenticationParametersWithClientID:clientSecret:enableSignUp:</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Sets the authentication parameters for Creative Cloud Authentication.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>- (void)setAuthenticationParametersWithClientID:(NSString *)<em>clientID</em> clientSecret:(NSString *)<em>clientSecret</em> enableSignUp:(BOOL)<em>enableSignUp</em></code></div>
+
+    
+	
+	<div class="method-subsection arguments-section parameters">
+		<h4 class="method-subtitle parameter-title">Parameters</h4>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>clientID</em></dt>
+			<dd><p>The clientID as supplied to the application developer by Adobe</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>clientSecret</em></dt>
+			<dd><p>The client secret for the application as supplied to the application developer by Adobe</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>enableSignUp</em></dt>
+			<dd><p>Ignored. This method always enables user sign up.</p></dd>
+		</dl>
+		
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Sets the authentication parameters for Creative Cloud Authentication.</p>
+
+<p>This method has been deprecated and will be obsoleted soon.  Use
+<a href="#//api/name/setAuthenticationParametersWithClientID:withClientSecret:">setAuthenticationParametersWithClientID:withClientSecret:</a> instead.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+						<div class="section-method">
+	<a name="//api/name/setAuthenticationParametersWithClientID:withClientSecret:" title="setAuthenticationParametersWithClientID:withClientSecret:"></a>
+	<h3 class="subsubtitle method-title">setAuthenticationParametersWithClientID:withClientSecret:</h3>
+	
+	
+	
+	<div class="method-subsection brief-description">
+		<p>Sets the authentication parameters for Creative Cloud Authentication.</p>
+	</div>		
+	
+    
+
+	<div class="method-subsection method-declaration"><code>- (void)setAuthenticationParametersWithClientID:(NSString *)<em>clientID</em> withClientSecret:(NSString *)<em>clientSecret</em></code></div>
+
+    
+	
+	<div class="method-subsection arguments-section parameters">
+		<h4 class="method-subtitle parameter-title">Parameters</h4>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>clientID</em></dt>
+			<dd><p>The clientID as supplied to the application developer by Adobe</p></dd>
+		</dl>
+		
+		<dl class="argument-def parameter-def">
+			<dt><em>clientSecret</em></dt>
+			<dd><p>The client secret for the application as supplied to the application developer by Adobe</p></dd>
+		</dl>
+		
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection discussion-section">
+		<h4 class="method-subtitle">Discussion</h4>
+		<p>Sets the authentication parameters for Creative Cloud Authentication.</p>
+
+<p>This method must be called once at application startup, typically in the application delegate.
+It must be called before any other authentication calls.</p>
+
+<p>This method does not initiate a login.  If needed, login is triggered when Creative Cloud
+services are accessed or when AdobeUXAuthManager login:onSuccess:onError is explicitly called.</p>
+
+<p>Currently Apple requires supporting in-app purchase before enabling sign up. Contact Adobe to learn
+about the in-app purchases you can offer through the Creative SDK.  This method enables user sign up.</p>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div class="method-subsection declared-in-section">
+		<h4 class="method-subtitle">Declared In</h4>
+		<code class="declared-in-ref">AdobeUXAuthManager.h</code><br />
+	</div>				
+	
+	
+</div>
+						
+					</div>
+					
+					
+                    
+                    
+				</div>
+				<div class="main-navigation navigation-bottom">
+					<ul>
+	<li><a href="../index.html">Index</a></li>
+	<li><a href="../hierarchy.html">Hierarchy</a></li>
+</ul>
+				</div>
+				<div id="footer">
+					<hr />
+					<div class="footer-copyright">
+						<p><span class="copyright">&copy; 2016 Adobe Systems Incorporated. All rights reserved. (Last updated: 2016-09-28)</span><br />
+						
+						<span class="generator">Generated by <a href="http://appledoc.gentlebytes.com">appledoc 2.2 (build 963)</a>.</span></p>
+						
+					</div>
+				</div>
+			</div>
+		</article>
+		<script type="text/javascript">
+			function jumpToChange()
+			{
+				window.location.hash = this.options[this.selectedIndex].value;
+			}
+			
+			function toggleTOC()
+			{
+				var contents = document.getElementById('contents');
+				var tocContainer = document.getElementById('tocContainer');
+				
+				if (this.getAttribute('class') == 'open')
+				{
+					this.setAttribute('class', '');
+					contents.setAttribute('class', '');
+					tocContainer.setAttribute('class', '');
+					
+					window.name = "hideTOC";
+				}
+				else
+				{
+					this.setAttribute('class', 'open');
+					contents.setAttribute('class', 'isShowingTOC');
+					tocContainer.setAttribute('class', 'isShowingTOC');
+					
+					window.name = "";
+				}
+				return false;
+			}
+			
+			function toggleTOCEntryChildren(e)
+			{
+				e.stopPropagation();
+				var currentClass = this.getAttribute('class');
+				if (currentClass == 'children') {
+					this.setAttribute('class', 'children open');
+				}
+				else if (currentClass == 'children open') {
+					this.setAttribute('class', 'children');
+				}
+				return false;
+			}
+			
+			function tocEntryClick(e)
+			{
+				e.stopPropagation();
+				return true;
+			}
+			
+			function init()
+			{
+				var selectElement = document.getElementById('jumpTo');
+				selectElement.addEventListener('change', jumpToChange, false);
+				
+				var tocButton = document.getElementById('table_of_contents');
+				tocButton.addEventListener('click', toggleTOC, false);
+				
+				var taskTreeItem = document.getElementById('task_treeitem');
+				if (taskTreeItem.getElementsByTagName('li').length > 0)
+				{
+					taskTreeItem.setAttribute('class', 'children');
+					taskTreeItem.firstChild.setAttribute('class', 'disclosure');
+				}
+				
+				var tocList = document.getElementById('toc');
+				
+				var tocEntries = tocList.getElementsByTagName('li');
+				for (var i = 0; i < tocEntries.length; i++) {
+					tocEntries[i].addEventListener('click', toggleTOCEntryChildren, false);
+				}
+				
+				var tocLinks = tocList.getElementsByTagName('a');
+				for (var i = 0; i < tocLinks.length; i++) {
+					tocLinks[i].addEventListener('click', tocEntryClick, false);
+				}
+				
+				if (window.name == "hideTOC") {
+					toggleTOC.call(tocButton);
+				}
+			}
+			
+			window.onload = init;
+			
+			// If showing in Xcode, hide the TOC and Header
+			if (navigator.userAgent.match(/xcode/i)) {
+				document.getElementById("contents").className = "hideInXcode"
+				document.getElementById("tocContainer").className = "hideInXcode"
+				document.getElementById("top_header").className = "hideInXcode"
+			}
+			
+		</script>
+	</body>
+</html>
